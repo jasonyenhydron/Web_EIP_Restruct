@@ -82,6 +82,7 @@ namespace Web_EIP_Restruct.Views.Components
         private const string CssBtnPrimary = "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors";
         private const string CssBtnSecondary = "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors";
         private const string CssBtnIcon    = "p-1.5 rounded-md transition-colors";
+        private const string CssBtnToolbarCompact = "inline-flex items-center justify-center w-8 h-8 text-slate-600 bg-white border border-slate-300 rounded-md transition-colors";
 
 
         public string Id             { get; set; } = "";
@@ -160,6 +161,11 @@ namespace Web_EIP_Restruct.Views.Components
         public bool   UpdateCommandVisible { get; set; } = true;
         public bool   DeleteCommandVisible { get; set; } = true;
         public bool   ViewCommandVisible   { get; set; } = true;
+        public bool   ToolbarViewCommandVisible   { get; set; } = false;
+        public bool   ToolbarEditCommandVisible   { get; set; } = false;
+        public bool   ToolbarDeleteCommandVisible { get; set; } = false;
+        public bool   ToolbarNavCommandVisible    { get; set; } = false;
+        public bool   ToolbarCompact             { get; set; } = false;
 
         public string OnLoadSuccess { get; set; } = "";
         public string OnSelect      { get; set; } = "";
@@ -257,8 +263,9 @@ namespace Web_EIP_Restruct.Views.Components
             }
 
             public bool HasEditActions =>
-                !string.IsNullOrEmpty(H.EditMode) &&
-                (H.AllowUpdate || H.AllowDelete || H.UpdateCommandVisible || H.DeleteCommandVisible || H.ViewCommandVisible);
+                H.ViewCommandVisible ||
+                (H.AllowDelete && H.DeleteCommandVisible) ||
+                (H.AllowUpdate && (H.UpdateCommandVisible || string.Equals(H.EditMode, "row", StringComparison.OrdinalIgnoreCase)));
         }
 
 
@@ -269,15 +276,7 @@ namespace Web_EIP_Restruct.Views.Components
             string generatedFormDialog, string alpineScript)
         {
             var h = cfg.H;
-            var addButton = (h.AllowAdd && !string.IsNullOrEmpty(h.EditMode))
-                ? $@"<button type=""button"" @click=""addRow()""
-                          class=""{CssBtnSecondary}"">
-                        <svg class=""w-3.5 h-3.5"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24"">
-                            <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M12 4v16m8-8H4""/>
-                        </svg>
-                        新增
-                    </button>"
-                : "";
+            var toolbarCommands = BuildToolbarCommandsHtml(cfg);
 
             var totalBadge = !h.Pagination
                 ? $@"<span class=""text-xs text-slate-400"">
@@ -293,15 +292,7 @@ namespace Web_EIP_Restruct.Views.Components
 <div class=""g-grid-toolbar flex items-center justify-between gap-3 px-4 py-2.5 border-b border-slate-200 bg-slate-100 shrink-0 flex-wrap"">
     <div class=""flex items-center gap-2"">
         {h.ToolbarHtml}
-        {addButton}
-        <button type=""button"" @click=""fetchData()"" title=""重新載入""
-                class=""{CssBtnSecondary}"">
-            <svg class=""w-3.5 h-3.5"" :class=""loading ? 'animate-spin' : ''"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24"">
-                <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2""
-                      d=""M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15""/>
-            </svg>
-            重整
-        </button>
+        {toolbarCommands}
     </div>
     {totalBadge}
 </div>
@@ -363,6 +354,90 @@ namespace Web_EIP_Restruct.Views.Components
 {paginationHtml}
 {generatedFormDialog}
 {alpineScript}";
+        }
+
+        private static string BuildToolbarCommandsHtml(GridConfig cfg)
+        {
+            var h = cfg.H;
+            var sb = new StringBuilder();
+            var compact = h.ToolbarCompact;
+
+            string BuildButton(string title, string click, string disabledExpr, string activeClass, string iconSvg, string text)
+            {
+                if (compact)
+                {
+                    return $@"<button type=""button"" @click=""{click}"" title=""{title}"" :disabled=""{disabledExpr}""
+                          :class=""{disabledExpr} ? 'opacity-40 cursor-not-allowed' : '{activeClass}'""
+                          class=""{CssBtnToolbarCompact}"">
+                        {iconSvg}
+                    </button>";
+                }
+
+                return $@"<button type=""button"" @click=""{click}"" title=""{title}"" :disabled=""{disabledExpr}""
+                          :class=""{disabledExpr} ? 'opacity-40 cursor-not-allowed' : '{activeClass}'""
+                          class=""{CssBtnSecondary}"">
+                        {iconSvg}
+                        {text}
+                    </button>";
+            }
+
+            void AppendSeparator()
+            {
+                if (sb.Length == 0) return;
+                sb.Append(@"<span class=""mx-1 h-6 w-px bg-slate-200""></span>");
+            }
+
+            if (h.ToolbarNavCommandVisible)
+            {
+                sb.Append(BuildButton("首筆", "selectFirstRow()", "!canSelectFirst", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M11 19l-7-7 7-7m9 14l-7-7 7-7""/></svg>", "首筆"));
+                sb.Append(BuildButton("上筆", "selectPrevRow()", "!canSelectPrev", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M15 19l-7-7 7-7""/></svg>", "上筆"));
+                sb.Append(BuildButton("下筆", "selectNextRow()", "!canSelectNext", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M9 5l7 7-7 7""/></svg>", "下筆"));
+                sb.Append(BuildButton("末筆", "selectLastRow()", "!canSelectLast", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M13 5l7 7-7 7M4 5l7 7-7 7""/></svg>", "末筆"));
+            }
+
+            if (h.AllowAdd && !string.IsNullOrEmpty(h.EditMode))
+            {
+                AppendSeparator();
+                sb.Append(BuildButton("新增", "addRow()", "false", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M12 4v16m8-8H4""/></svg>", "新增"));
+            }
+
+            if (h.ToolbarViewCommandVisible)
+            {
+                sb.Append(BuildButton("檢視", "onViewSelected()", "!hasSelection", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24"">
+                            <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M15 12a3 3 0 11-6 0 3 3 0 016 0""/>
+                            <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z""/>
+                        </svg>", "檢視"));
+            }
+
+            if (h.ToolbarEditCommandVisible)
+            {
+                sb.Append(BuildButton("編輯", "editSelectedRow()", "!hasSelection", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24"">
+                            <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z""/>
+                        </svg>", "編輯"));
+            }
+
+            if (h.ToolbarDeleteCommandVisible)
+            {
+                sb.Append(BuildButton("刪除", "deleteSelectedRow()", "!hasSelection", "hover:bg-rose-50 hover:text-rose-600",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24"">
+                            <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16""/>
+                        </svg>", "刪除"));
+            }
+
+            AppendSeparator();
+            sb.Append(BuildButton("重整", "fetchData()", "false", "hover:bg-slate-50",
+                @"<svg class=""w-4 h-4"" :class=""loading ? 'animate-spin' : ''"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24"">
+                    <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15""/>
+                </svg>", "重整"));
+
+            return sb.ToString();
         }
 
         private static string BuildTheadHtml(GridConfig cfg, List<ColumnDef> cols, HashSet<string> sortableFieldSet)
@@ -1456,6 +1531,103 @@ function gDataGrid_{cfg.CompId}() {{
             {CallbackJs(h.OnInsert)}
             this.$dispatch('add');
         }},
+        get hasSelection() {{
+            return !!this.getSelectedRow();
+        }},
+        get hasRows() {{
+            return this.sortedRows.length > 0;
+        }},
+        get selectedRowIndex() {{
+            return this.findRowIndex(this.selectedRow);
+        }},
+        get canSelectFirst() {{
+            return this.hasRows && this.selectedRowIndex !== 0;
+        }},
+        get canSelectLast() {{
+            return this.hasRows && this.selectedRowIndex !== this.sortedRows.length - 1;
+        }},
+        get canSelectPrev() {{
+            return this.selectedRowIndex > 0;
+        }},
+        get canSelectNext() {{
+            const idx = this.selectedRowIndex;
+            if (!this.hasRows) return false;
+            if (idx < 0) return true;
+            return idx < this.sortedRows.length - 1;
+        }},
+        findRowIndex(row) {{
+            if (!row) return -1;
+            const selectedId = row?.['{cfg.ActualIdField}'];
+            return this.sortedRows.findIndex(item => item === row || item?.['{cfg.ActualIdField}'] === selectedId);
+        }},
+        setSelectedRow(row, invokeCallbacks = true) {{
+            if (!row) {{
+                this.selectedRow = null;
+                return null;
+            }}
+
+            const idx = this.findRowIndex(row);
+            const targetRow = idx >= 0 ? this.sortedRows[idx] : row;
+            if (idx >= 0) {{
+                this.currentPage = Math.floor(idx / Number(this.pageSize)) + 1;
+            }}
+
+            this.selectedRow = targetRow;
+            if (invokeCallbacks) {{
+                this.invokeExpression(this.onRowClickExpr, targetRow);
+                this.invokeExpression(this.onSelectExpr, targetRow);
+            }}
+
+            return targetRow;
+        }},
+        selectRowByIndex(index, invokeCallbacks = true) {{
+            const targetIndex = Number(index);
+            if (Number.isNaN(targetIndex) || targetIndex < 0 || targetIndex >= this.sortedRows.length) return null;
+            const targetRow = this.sortedRows[targetIndex];
+            return this.setSelectedRow(targetRow, invokeCallbacks);
+        }},
+        selectFirstRow() {{
+            return this.selectRowByIndex(0);
+        }},
+        selectPrevRow() {{
+            const idx = this.selectedRowIndex;
+            if (idx > 0) return this.selectRowByIndex(idx - 1);
+            return this.selectedRow;
+        }},
+        selectNextRow() {{
+            const idx = this.selectedRowIndex;
+            if (idx >= 0 && idx < this.sortedRows.length - 1) return this.selectRowByIndex(idx + 1);
+            if (idx < 0 && this.sortedRows.length > 0) return this.selectFirstRow();
+            return this.selectedRow;
+        }},
+        selectLastRow() {{
+            return this.selectRowByIndex(this.sortedRows.length - 1);
+        }},
+        ensureSelectedRow(actionName) {{
+            const row = this.getSelectedRow();
+            if (row) return row;
+            window.gDataGridRuntime.showToast(`請先選取要${{actionName}}的資料`, 'warning');
+            return null;
+        }},
+        onViewSelected() {{
+            const row = this.ensureSelectedRow('檢視');
+            if (!row) return;
+            this.onView(row);
+        }},
+        editSelectedRow() {{
+            const row = this.ensureSelectedRow('編輯');
+            if (!row) return;
+            if ('{h.EditMode}' === 'row') {{
+                this.startEdit(row);
+                return;
+            }}
+            this.editRow(row);
+        }},
+        async deleteSelectedRow() {{
+            const row = this.ensureSelectedRow('刪除');
+            if (!row) return false;
+            return await this.deleteRow(row);
+        }},
         editRow(row) {{
             if (Array.isArray(this.formColumns) && this.formColumns.length > 0)
                 this.openGeneratedForm('edit', row);
@@ -1794,14 +1966,14 @@ function gDataGrid_{cfg.CompId}() {{
                     </select>",
 
                 "gcombogrid" or "lovinput" or "gcombogrid" =>
-                    $@"<div class=""relative flex"">
+                    $@"<div class=""flex items-center"">
                         <input type=""text"" id=""{field}_query_input""
                                x-model=""queryDisplayValues['{field}']""
                                @input=""queryValues['{field}'] = queryDisplayValues['{field}']""
-                               class=""w-full pr-10 {CssInput}""
+                               class=""block min-w-0 flex-1 px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm text-slate-700 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors""
                                @keydown.enter.prevent=""onQueryInputEnter('{field}', '{field}_query_input', queryDisplayValues['{field}'])"">
                         <button type=""button"" @click=""invokeQueryDefaultMethod('{field}', '{field}_query_input', queryDisplayValues['{field}'])""
-                                class=""absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-600 transition-colors"" title=""選取"">
+                                class=""shrink-0 inline-flex items-center justify-center px-3 border border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors"" title=""選取"">
                             <svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24"">
                                 <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z""/>
                             </svg>
@@ -1935,14 +2107,14 @@ function gDataGrid_{cfg.CompId}() {{
                     break;
 
                 case FormColumnType.Lov:
-                    sb.Append($@"<div class=""relative flex items-center"">
+                    sb.Append($@"<div class=""flex items-center"">
                         <input type=""hidden"" x-model=""formRecord['{f}']"">
                         <input type=""text"" x-model=""formRecord['{f}__DISPLAY']"" :readonly=""true""
-                               {roClass} class=""w-full pr-9 {CssInput}""{placeholder}{maxLength}>
+                               {roClass} class=""block min-w-0 flex-1 px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors""{placeholder}{maxLength}>
                         <button type=""button""
                                 x-show=""!({roExpr})""
-                                @click=""openFormLov('{f}')""
-                                class=""absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"" title=""選取"">
+                                @click=""openFormLov('{f}')"" 
+                                class=""shrink-0 inline-flex items-center justify-center px-3 border border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors"" title=""選取"">
                             <svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24"">
                                 <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2""
                                       d=""M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z""/>

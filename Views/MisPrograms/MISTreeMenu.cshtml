@@ -27,14 +27,18 @@
         <main class="flex-1 overflow-auto p-5 space-y-4">
             @if (!string.IsNullOrWhiteSpace(ViewBag.Error as string))
             {
-                <div class="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3">
+                <div id="misProgramsError" class="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3">
                     <p>@ViewBag.Error</p>
                 </div>
+            }
+            else
+            {
+                <div id="misProgramsError" class="hidden rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3"></div>
             }
 
             <section class="mis-panel p-4">
                 <h2 class="mis-panel-title mb-3">查詢條件</h2>
-                <form method="get" action="/mis/programs" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <form id="misProgramsQueryForm" method="get" action="/mis/programs" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                     <g-suggest-input label="程式編號"
                                      name="program_no"
                                      id="program_no"
@@ -73,9 +77,9 @@
                                 col-span="1">
                     </g-combobox>
                     <div class="flex gap-2 md:col-span-3">
-                        <g-button icon="search" text="查詢" type="primary" submit="true"></g-button>
-                        <g-button icon="refresh"  text="清除" type="secondary" href="/mis/programs"></g-button>
-                        <g-button icon="excute" text="執行" type="secondary" onclick="runProgram()"></g-button>
+                        <g-button id="misProgramsQueryButton" icon="search" text="查詢" type="primary" submit="true"></g-button>
+                        <g-button id="misProgramsClearButton" icon="refresh" text="清除" type="secondary"></g-button>
+                        <g-button id="misProgramsRunButton" icon="excute" text="執行" type="secondary" onclick="runProgram()"></g-button>
                     </div>
                 </form>
             </section>
@@ -84,10 +88,10 @@
                 <div class="xl:col-span-5 mis-panel p-4">
                     <div class="flex items-center justify-between mb-3">
                         <h2 class="mis-panel-title">程式清單</h2>
-                        <span class="text-sm text-slate-500">共 @programs.Count 筆</span>
+                        <span class="text-sm text-slate-500">共 <span id="misProgramsCount">@programs.Count</span> 筆</span>
                     </div>
 
-                    <div class="tree-container mis-tree-wrap pr-1">
+                    <div id="misProgramsTree" class="tree-container mis-tree-wrap pr-1">
                         @if (categories.Count == 0)
                         {
                             <div class="text-slate-500 text-sm">查無資料</div>
@@ -207,6 +211,14 @@
         <iframe id="executionIframe" class="flex-1 w-full border-0" src="about:blank" title="程式執行視窗"></iframe>
     </div>
 </div>
+
+<div id="executionMinimizedDockList"
+     class="fixed right-5 bottom-5 z-[65] hidden flex-col items-end gap-3"
+     style="display:none;"
+     aria-label="已最小化程式清單">
+</div>
+
+<div id="executionIframeParking" class="hidden" aria-hidden="true"></div>
 
 @section Scripts {
     <g-js profile="mis-programs"></g-js>

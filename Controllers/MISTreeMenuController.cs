@@ -59,58 +59,8 @@ WHERE rn > :offset AND rn <= :endRow");
 
             try
             {
-                const string sql = @"
-                    SELECT LANGUAGE_ID, PROGRAM_ID, PROGRAM_NO, PROGRAM_NAME,
-                           EMPLOYEE_ID, PURPOSE,
-                           PLAN_START_DEVELOP_DATE, PLAN_FINISH_DEVELOP_DATE,
-                           REAL_START_DEVELOP_DATE, REAL_FINISH_DEVELOP_DATE,
-                           PLAN_WORK_HOURS, REAL_WORK_HOURS,
-                           DISPLAY_CODE, PROGRAM_TYPE
-                    FROM idm_program_v
-                    WHERE program_no LIKE :program_no || '%'
-                      AND (employee_id = :employee_id OR :employee_id IS NULL)
-                      AND (display_code = :display_code OR :display_code IS NULL)
-                      AND LANGUAGE_ID = 1
-                    ORDER BY program_no";
-
-                var dt = await DbHelper.GetDataTableAsync(
-                    BuildDbConnectionString(tns),
-                    CommandType.Text,
-                    sql,
-                    new DbParameter[]
-                    {
-                        DbHelper.CreateParameter("program_no", string.IsNullOrEmpty(program_no) ? string.Empty : program_no),
-                        DbHelper.CreateParameter("employee_id", string.IsNullOrEmpty(employee_id) ? (object)DBNull.Value : employee_id),
-                        DbHelper.CreateParameter("display_code", string.IsNullOrEmpty(display_code) ? (object)DBNull.Value : display_code)
-                    });
-
-                var programs = dt.Rows.Cast<DataRow>().Select(MapIdmProgramV).ToList();
-
-                var categories = new Dictionary<string, List<IdmProgramVModel>>();
-                var systemNames = new Dictionary<string, string>
-                {
-                    { "HRM", "HRM 系統" }, { "FIN", "FIN 系統" }, { "INV", "INV 系統" }, { "PUR", "PUR 系統" },
-                    { "SAL", "SAL 系統" }, { "MFG", "MFG 系統" }, { "SDM", "SDM 系統" }, { "IDM", "IDM 系統" }
-                };
-
-                foreach (var program in programs)
-                {
-                    var progNo = program.ProgramNo ?? string.Empty;
-                    if (progNo.Length >= 3)
-                    {
-                        var prefix = progNo.Substring(0, 3);
-                        var systemName = systemNames.TryGetValue(prefix, out var mapped) ? mapped : $"{prefix} 系統";
-                        if (!categories.ContainsKey(systemName))
-                            categories[systemName] = new List<IdmProgramVModel>();
-                        categories[systemName].Add(program);
-                    }
-                    else
-                    {
-                        if (!categories.ContainsKey("未分類"))
-                            categories["未分類"] = new List<IdmProgramVModel>();
-                        categories["未分類"].Add(program);
-                    }
-                }
+                var programs = await QueryProgramsAsync(tns, program_no, employee_id, display_code);
+                var categories = BuildCategories(programs);
 
                 ViewBag.Categories = categories;
                 ViewBag.Programs = programs;
@@ -126,6 +76,61 @@ WHERE rn > :offset AND rn <= :endRow");
                 ViewBag.Error = $"系統錯誤: {e.Message}";
                 ViewBag.Programs = new List<IdmProgramVModel>();
                 return View("~/Views/MisPrograms/MISTreeMenu.cshtml", vm);
+            }
+        }
+
+        [HttpGet("api/mis/programs/search")]
+        public async Task<IActionResult> SearchPrograms([FromQuery] string program_no, [FromQuery] string employee_id, [FromQuery] string display_code = "Y")
+        {
+            var username = HttpContext.Session.GetString("username");
+            var password = HttpContext.Session.GetString("password");
+            var tns = HttpContext.Session.GetString("tns");
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(tns))
+                return Unauthorized(new { status = "error", message = "Not logged in" });
+
+            try
+            {
+                var programs = await QueryProgramsAsync(tns, program_no, employee_id, display_code);
+                var categories = BuildCategories(programs);
+
+                var result = categories
+                    .Select(x => new
+                    {
+                        name = x.Key,
+                        count = x.Value.Count,
+                        programs = x.Value.Select(p => new
+                        {
+                            programNo = p.ProgramNo,
+                            programName = p.ProgramName,
+                            purpose = p.Purpose,
+                            employeeId = p.EmployeeId,
+                            programType = p.ProgramType,
+                            planStart = p.PlanStartDevelopDate,
+                            planFinish = p.PlanFinishDevelopDate,
+                            realStart = p.RealStartDevelopDate,
+                            realFinish = p.RealFinishDevelopDate,
+                            planHours = p.PlanWorkHours,
+                            realHours = p.RealWorkHours,
+                            displayCode = p.DisplayCode
+                        })
+                    });
+
+                return Json(new
+                {
+                    status = "success",
+                    count = programs.Count,
+                    filters = new
+                    {
+                        program_no = program_no ?? string.Empty,
+                        employee_id = employee_id ?? string.Empty,
+                        display_code = display_code ?? "Y"
+                    },
+                    categories = result
+                });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { status = "error", message = e.Message });
             }
         }
 
@@ -241,6 +246,67 @@ WHERE rn > :offset AND rn <= :endRow");
                 DisplayCode = ToStringOrEmpty(row, "DISPLAY_CODE"),
                 ProgramType = ToStringOrEmpty(row, "PROGRAM_TYPE")
             };
+        }
+
+        private static async Task<List<IdmProgramVModel>> QueryProgramsAsync(string tns, string? programNo, string? employeeId, string? displayCode)
+        {
+            const string sql = @"
+                SELECT LANGUAGE_ID, PROGRAM_ID, PROGRAM_NO, PROGRAM_NAME,
+                       EMPLOYEE_ID, PURPOSE,
+                       PLAN_START_DEVELOP_DATE, PLAN_FINISH_DEVELOP_DATE,
+                       REAL_START_DEVELOP_DATE, REAL_FINISH_DEVELOP_DATE,
+                       PLAN_WORK_HOURS, REAL_WORK_HOURS,
+                       DISPLAY_CODE, PROGRAM_TYPE
+                FROM idm_program_v
+                WHERE program_no LIKE :program_no || '%'
+                  AND (employee_id = :employee_id OR :employee_id IS NULL)
+                  AND (display_code = :display_code OR :display_code IS NULL)
+                  AND LANGUAGE_ID = 1
+                ORDER BY program_no";
+
+            var dt = await DbHelper.GetDataTableAsync(
+                BuildDbConnectionString(tns),
+                CommandType.Text,
+                sql,
+                new DbParameter[]
+                {
+                    DbHelper.CreateParameter("program_no", string.IsNullOrEmpty(programNo) ? string.Empty : programNo),
+                    DbHelper.CreateParameter("employee_id", string.IsNullOrEmpty(employeeId) ? (object)DBNull.Value : employeeId),
+                    DbHelper.CreateParameter("display_code", string.IsNullOrEmpty(displayCode) ? (object)DBNull.Value : displayCode)
+                });
+
+            return dt.Rows.Cast<DataRow>().Select(MapIdmProgramV).ToList();
+        }
+
+        private static Dictionary<string, List<IdmProgramVModel>> BuildCategories(IEnumerable<IdmProgramVModel> programs)
+        {
+            var categories = new Dictionary<string, List<IdmProgramVModel>>();
+            var systemNames = new Dictionary<string, string>
+            {
+                { "HRM", "HRM 系統" }, { "FIN", "FIN 系統" }, { "INV", "INV 系統" }, { "PUR", "PUR 系統" },
+                { "SAL", "SAL 系統" }, { "MFG", "MFG 系統" }, { "SDM", "SDM 系統" }, { "IDM", "IDM 系統" }
+            };
+
+            foreach (var program in programs)
+            {
+                var progNo = program.ProgramNo ?? string.Empty;
+                if (progNo.Length >= 3)
+                {
+                    var prefix = progNo.Substring(0, 3);
+                    var systemName = systemNames.TryGetValue(prefix, out var mapped) ? mapped : $"{prefix} 系統";
+                    if (!categories.ContainsKey(systemName))
+                        categories[systemName] = new List<IdmProgramVModel>();
+                    categories[systemName].Add(program);
+                }
+                else
+                {
+                    if (!categories.ContainsKey("未分類"))
+                        categories["未分類"] = new List<IdmProgramVModel>();
+                    categories["未分類"].Add(program);
+                }
+            }
+
+            return categories;
         }
 
         private static string ToStringOrEmpty(DataRow row, string column) =>

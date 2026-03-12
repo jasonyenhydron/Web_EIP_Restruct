@@ -122,7 +122,7 @@ namespace Web_EIP_Restruct.Views.Components
             var nameHtml   = BuildNameHtml();
             var btnHtml    = BuildButtonHtml();
 
-            var inputsHtml = $"<div class=\"flex\">{hiddenHtml}{codeHtml}{nameHtml}{btnHtml}</div>";
+            var inputsHtml = $"<div class=\"flex items-center\">{hiddenHtml}{codeHtml}{nameHtml}{btnHtml}</div>";
             output.Content.SetHtmlContent(labelHtml + inputsHtml);
             AppendNamedLovRegistration(output);
         }
@@ -144,45 +144,44 @@ namespace Web_EIP_Restruct.Views.Components
         private string BuildCodeHtml()
         {
             if (string.IsNullOrEmpty(CodeId)) return string.Empty;
-
-            var hasRight          = !string.IsNullOrEmpty(NameId) || ShowButton;
-            var effectiveWidth    = hasRight ? CodeWidth : "w-full";
-            var rounded           = hasRight ? "rounded-l-lg rounded-r-none" : "rounded-lg";
-            var rdAttr            = SelectOnly ? " readonly" : string.Empty;
             var xmAttr            = !string.IsNullOrEmpty(XModelCode) ? $" x-model=\"{XModelCode}\"" : string.Empty;
-
-            var styleClass = SelectOnly
-                ? "text-white font-bold bg-blue-600 cursor-pointer"
-                : "text-slate-800 font-normal bg-white cursor-text";
-
-            var onKeydown = SelectOnly
-                ? string.Empty
-                : " onkeydown=\"if(event.key==='Enter'){event.preventDefault();window.gLov&&window.gLov.typeSearchInput&&window.gLov.typeSearchInput(this,true);}\"";
-
-            return $"<input type=\"text\" id=\"{HtmlId(CodeId)}\" name=\"{HtmlEncode(CodeId)}\" data-lov-slot=\"code\""
-                 + $" value=\"{HtmlEncode(CodeValue)}\""
-                 + $" placeholder=\"{HtmlEncode(CodePlaceholder)}\""
-                 + rdAttr + onKeydown + xmAttr
-                 + $" class=\"block {effectiveWidth} px-3 py-2 border border-slate-300 {rounded} text-sm"
-                 + $" {styleClass}"
-                 + " focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors\">";
+            return $"<input type=\"hidden\" id=\"{HtmlId(CodeId)}\" name=\"{HtmlEncode(CodeId)}\" data-lov-slot=\"code\""
+                 + $" value=\"{HtmlEncode(CodeValue)}\"{xmAttr}>";
         }
 
         private string BuildNameHtml()
         {
-            if (string.IsNullOrEmpty(NameId)) return string.Empty;
+            var hiddenNameHtml = string.Empty;
+            if (!string.IsNullOrEmpty(NameId))
+            {
+                var hiddenXmAttr = !string.IsNullOrEmpty(XModelName) ? $" x-model=\"{XModelName}\"" : string.Empty;
+                hiddenNameHtml = $"<input type=\"hidden\" id=\"{HtmlId(NameId)}\" name=\"{HtmlEncode(NameId)}\" data-lov-slot=\"name\""
+                               + $" value=\"{HtmlEncode(NameValue)}\"{hiddenXmAttr}>";
+            }
 
-            var xmAttr   = !string.IsNullOrEmpty(XModelName) ? $" x-model=\"{XModelName}\"" : string.Empty;
-            var leftClass  = !string.IsNullOrEmpty(CodeId) ? "rounded-none border-l-0" : "rounded-lg";
-            var rightClass = ShowButton ? "rounded-r-none" : string.Empty;
+            var displayId = GetDisplayInputId();
+            var readonlyAttr = Readonly || SelectOnly ? " readonly" : string.Empty;
+            var onclick = BuildOnClick();
+            var onClickAttr = SelectOnly && !string.IsNullOrWhiteSpace(onclick)
+                ? $" onclick=\"{HtmlAttr(onclick)}\""
+                : string.Empty;
+            var onKeydown = Readonly || SelectOnly
+                ? string.Empty
+                : " onkeydown=\"if(event.key==='Enter'){event.preventDefault();window.gLov&&window.gLov.typeSearchInput&&window.gLov.typeSearchInput(this,true);}\"";
+            var placeholder = !string.IsNullOrWhiteSpace(NamePlaceholder)
+                ? NamePlaceholder
+                : (!string.IsNullOrWhiteSpace(CodePlaceholder) ? CodePlaceholder : "請選擇資料");
+            var displayValue = BuildInitialDisplayValue();
 
-            return $"<input type=\"text\" id=\"{HtmlId(NameId)}\" name=\"{HtmlEncode(NameId)}\" data-lov-slot=\"name\""
-                 + $" value=\"{HtmlEncode(NameValue)}\""
-                 + $" placeholder=\"{HtmlEncode(NamePlaceholder)}\""
-                 + " readonly" + xmAttr
-                 + $" class=\"block flex-1 px-3 py-2 border border-slate-300 {leftClass} {rightClass} text-sm"
-                 + " text-slate-500 bg-slate-100 cursor-not-allowed"
-                 + " focus:outline-none transition-colors\">";
+            return hiddenNameHtml
+                 + $"<input type=\"text\" id=\"{HtmlId(displayId)}\" data-lov-slot=\"display\""
+                 + $" value=\"{HtmlEncode(displayValue)}\""
+                 + $" placeholder=\"{HtmlEncode(placeholder)}\""
+                 + readonlyAttr + onKeydown + onClickAttr
+                 + " class=\"block min-w-0 flex-1 px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm"
+                 + " text-slate-700 bg-white placeholder:text-slate-400"
+                 + (Readonly || SelectOnly ? " cursor-pointer" : " cursor-text")
+                 + " focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors\">";
         }
 
         private string BuildButtonHtml()
@@ -193,14 +192,11 @@ namespace Web_EIP_Restruct.Views.Components
             var onclick = string.IsNullOrEmpty(openCmd) ? string.Empty : $" onclick=\"{HtmlAttr(openCmd)}\"";
 
             return $"<button type=\"button\" data-lov-open-btn=\"1\"{onclick}"
-                 + " class=\"px-3 border border-l-0 border-slate-300 rounded-r-lg"
-                 + " bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-blue-600 transition-colors\">"
+                 + " class=\"shrink-0 inline-flex items-center justify-center px-3 border border-slate-300 rounded-r-xl"
+                 + " bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors\">"
                  + "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">"
                  + "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\""
-                 + " d=\"M5 12h.01M12 12h.01M19 12h.01"
-                 + " M6 12a1 1 0 11-2 0 1 1 0 012 0z"
-                 + " m7 0a1 1 0 11-2 0 1 1 0 012 0z"
-                 + " m7 0a1 1 0 11-2 0 1 1 0 012 0z\"/>"
+                 + " d=\"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\"/>"
                  + "</svg>"
                  + "</button>";
         }
@@ -336,7 +332,7 @@ if (typeof window.gLov.define === 'function') {{
             if (!string.IsNullOrWhiteSpace(LovFn)) return LovFn;
 
             var api         = BuildLovApiUrl();
-            var formatFn    = BuildFormatFunction(LovDisplayFormat);
+            var formatFn    = BuildFormatFunction(GetEffectiveDisplayFormat());
             var callback    = string.IsNullOrWhiteSpace(LovOnConfirm) ? "null" : LovOnConfirm;
             var onSelectJs  = string.IsNullOrWhiteSpace(OnSelect) ? "null" : OnSelect;
             var colMatchJs  = ToJsObjectOrArrayOrNull(ColumnMatches);
@@ -345,7 +341,7 @@ if (typeof window.gLov.define === 'function') {{
             var bufferView  = LovBufferView ?? true;
             var sortEnabled = LovSortEnabled ?? false;
             var reqMode     = NormalizeRequestMode(LovRequestMode);
-            var sourceId    = EscapeJs(CodeId);
+            var sourceId    = EscapeJs(GetDisplayInputId());
 
             var options = $"{{ bufferView: {Bool(bufferView)}, pageSize: {pageSize},"
                         + $" sortEnabled: {Bool(sortEnabled)}, requestMode: '{reqMode}',"
@@ -381,6 +377,7 @@ if (typeof window.gLov.define === 'function') {{
             var keyHidden = LovKeyHidden.Coalesce(LovReturnValueField);
             var keyCode   = LovKeyCode.Coalesce(LovReturnValueField);
             var keyName   = LovKeyName.Coalesce(LovReturnDisplayField);
+            var displayId = GetDisplayInputId();
 
             void Append(string key, string targetId)
             {
@@ -393,16 +390,61 @@ if (typeof window.gLov.define === 'function') {{
             Append(keyHidden, HiddenId);
             Append(keyCode,   CodeId);
             Append(keyName,   NameId);
-
-            var formatTargetId = NameId.Coalesce(CodeId);
-            if (!string.IsNullOrWhiteSpace(LovDisplayFormat) && !string.IsNullOrWhiteSpace(formatTargetId))
-            {
-                if (!first) sb.Append(',');
-                sb.Append($"'FORMATTED_DISPLAY':'{EscapeJs(formatTargetId)}'");
-            }
+            Append("FORMATTED_DISPLAY", displayId);
 
             sb.Append('}');
             return sb.ToString();
+        }
+
+        private string GetDisplayInputId()
+        {
+            if (!string.IsNullOrWhiteSpace(NameId)) return $"{NameId}_display";
+            if (!string.IsNullOrWhiteSpace(CodeId)) return $"{CodeId}_display";
+            if (!string.IsNullOrWhiteSpace(HiddenId)) return $"{HiddenId}_display";
+            return "lovDisplay";
+        }
+
+        private string BuildInitialDisplayValue()
+        {
+            var code = (CodeValue ?? string.Empty).Trim();
+            var name = (NameValue ?? string.Empty).Trim();
+
+            if (!string.IsNullOrWhiteSpace(code) && !string.IsNullOrWhiteSpace(name))
+            {
+                return $"{code}-{name}";
+            }
+
+            return !string.IsNullOrWhiteSpace(name) ? name : code;
+        }
+
+        private string GetEffectiveDisplayFormat()
+        {
+            if (!string.IsNullOrWhiteSpace(LovDisplayFormat))
+            {
+                return LovDisplayFormat;
+            }
+
+            var keyCode = LovKeyCode.Coalesce(LovReturnValueField);
+            var keyName = LovKeyName.Coalesce(LovReturnDisplayField);
+
+            if (!string.IsNullOrWhiteSpace(keyCode) &&
+                !string.IsNullOrWhiteSpace(keyName) &&
+                !string.Equals(keyCode, keyName, StringComparison.OrdinalIgnoreCase))
+            {
+                return $"{{{keyCode}}}-{{{keyName}}}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyName))
+            {
+                return $"{{{keyName}}}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyCode))
+            {
+                return $"{{{keyCode}}}";
+            }
+
+            return string.Empty;
         }
 
 

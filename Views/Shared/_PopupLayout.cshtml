@@ -84,7 +84,7 @@
                                 </svg>
                             </button>
                             <button type="button" class="g-popup-title-btn h-9 w-9 rounded-md inline-flex items-center justify-center transition-colors"
-                                    title="還原" onclick="gPopupSetWindowMode('normal')">
+                                    title="最小化" onclick="gPopupMinimizeWindow()">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
                                 </svg>
@@ -169,9 +169,15 @@
                     this.minWidth = parseInt(this.box.dataset.minWidth || "640", 10);
                     this.minHeight = parseInt(this.box.dataset.minHeight || "420", 10);
 
+                    if (window.parent && window.parent !== window &&
+                        typeof window.parent.setExecutionModalChrome === "function") {
+                        window.parent.setExecutionModalChrome({ hideHeader: true });
+                    }
+
                     this.bindEvents();
 
                     window.gPopupSetWindowMode = (mode) => this.setWindowMode(mode);
+                    window.gPopupMinimizeWindow = () => this.minimizeWindow();
                     window.gPopupHasUnsavedChanges = () => this.hasUnsavedChanges();
                     window.gPopupDoClose = () => this.doClose();
                     window.gPopupTryClose = () => this.tryClose();
@@ -197,9 +203,17 @@
                 setWindowMode(mode) {
                     if (!this.canMax && mode === "max") return;
 
+                    const syncParentWindowMode = (nextMode) => {
+                        if (window.parent && window.parent !== window &&
+                            typeof window.parent.setExecutionModalWindowMode === "function") {
+                            window.parent.setExecutionModalWindowMode(nextMode);
+                        }
+                    };
+
                     if (mode === "max") {
                         if (!this.box.classList.contains("is-maximized")) this.state.prevRect = this.captureRect();
                         this.box.classList.add("is-maximized");
+                        syncParentWindowMode("max");
                         return;
                     }
 
@@ -209,6 +223,7 @@
                     }
 
                     this.box.classList.remove("is-maximized");
+                    syncParentWindowMode("normal");
                     if (this.state.prevRect) {
                         this.applyRect(this.state.prevRect);
                     } else {
@@ -218,6 +233,15 @@
                         this.box.style.height = "95vh";
                         this.box.style.transform = "translate(-50%, -50%)";
                     }
+                },
+                minimizeWindow() {
+                    if (window.parent && window.parent !== window &&
+                        typeof window.parent.minimizeExecutionModal === "function") {
+                        window.parent.minimizeExecutionModal();
+                        return;
+                    }
+
+                    this.setWindowMode("normal");
                 },
                 bindEvents() {
                     if (this.canMove && this.titlebar) {

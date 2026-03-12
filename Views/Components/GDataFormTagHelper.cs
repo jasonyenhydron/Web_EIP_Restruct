@@ -303,18 +303,17 @@ namespace Web_EIP_Restruct.Views.Components
             var keyDisp = JsEsc(string.IsNullOrWhiteSpace(col.LovKeyDisplay) ? col.FieldName : col.LovKeyDisplay);
             var displayField = string.IsNullOrWhiteSpace(col.LovKeyDisplay) ? col.FieldName : col.LovKeyDisplay;
             var displayFieldJs = JsEsc(displayField);
-            var fmt = JsEsc(col.LovDisplayFormat);
+            var effectiveFormat = GetEffectiveLovDisplayFormat(col.LovKeyValue, col.LovKeyDisplay, col.LovDisplayFormat, col.FieldName);
+            var fmt = JsEsc(effectiveFormat);
             var inputId = $"{formId}_query_{col.FieldName}";
-            var displayMap = string.IsNullOrWhiteSpace(col.LovDisplayFormat)
-                ? $"'{keyDisp}':'{HtmlAttr(inputId)}'"
-                : $"'FORMATTED_DISPLAY':'{HtmlAttr(inputId)}'";
+            var displayMap = $"'FORMATTED_DISPLAY':'{HtmlAttr(inputId)}'";
             var onConfirm = $"function(selected){{const root=document.getElementById('{HtmlAttr(formId)}');if(!root||!root._x_dataStack)return;const data=Alpine.$data(root);if(data){{data.queryValues['{field}']=selected['{keyVal}']??'';data.queryValues['{displayFieldJs}']={(string.IsNullOrWhiteSpace(fmt) ? $"(selected['{keyDisp}']??'')" : BuildLovDisplayExpression(fmt, "selected"))};}}}}";
             var openJs = $"gLov.open({{title:'{title}',api:'{api}',columns:['{cols}'.split(',')].flat(),fields:['{fields}'.split(',')].flat(),map:{{'{keyVal}':'{HtmlAttr(inputId)}_hidden',{displayMap}}},formatDisplay:{(string.IsNullOrWhiteSpace(fmt) ? "null" : $"function(d){{return {BuildLovDisplayExpression(fmt, "d")};}}")},onConfirm:{onConfirm}}})";
 
-            return "<div class=\"flex\">"
+            return "<div class=\"flex items-center\">"
                  + $"<input type=\"hidden\" id=\"{inputId}_hidden\" x-model=\"queryValues['{field}']\"{queryAttr}>"
-                 + $"<input type=\"text\" id=\"{inputId}\" x-model=\"queryValues['{displayFieldJs}']\" readonly placeholder=\"{HtmlEnc(col.Placeholder.Coalesce("請選擇..."))}\" class=\"flex-1 px-3 py-2 border border-slate-300 rounded-l-lg text-sm bg-white text-slate-800 cursor-pointer focus:outline-none\">"
-                 + $"<button type=\"button\" onclick=\"{HtmlAttr(openJs)}\" class=\"px-3 border border-l-0 border-slate-300 rounded-r-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-blue-600 transition-colors\">"
+                 + $"<input type=\"text\" id=\"{inputId}\" x-model=\"queryValues['{displayFieldJs}']\" readonly placeholder=\"{HtmlEnc(col.Placeholder.Coalesce("請選擇資料"))}\" class=\"block min-w-0 flex-1 px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm text-slate-700 bg-white placeholder:text-slate-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors\">"
+                 + $"<button type=\"button\" onclick=\"{HtmlAttr(openJs)}\" class=\"shrink-0 inline-flex items-center justify-center px-3 border border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors\">"
                  + "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\"/></svg></button></div>";
         }
 
@@ -592,13 +591,12 @@ namespace Web_EIP_Restruct.Views.Components
             var api = JsEsc(col.LovApi);
             var keyVal = JsEsc(col.LovKeyValue);
             var keyDisp = JsEsc(col.LovKeyDisplay);
-            var fmt = JsEsc(col.LovDisplayFormat);
+            var effectiveFormat = GetEffectiveLovDisplayFormat(col.LovKeyValue, col.LovKeyDisplay, col.LovDisplayFormat, col.FieldName);
+            var fmt = JsEsc(effectiveFormat);
             var cb = string.IsNullOrWhiteSpace(col.LovOnConfirm) ? "null" : col.LovOnConfirm;
             var inputId = $"{formId}_lov_{col.FieldName}";
             var validateAttrs = BuildValidateAttrs(col);
-            var displayMap = string.IsNullOrWhiteSpace(col.LovDisplayFormat)
-                ? $"'{keyDisp}':'{HtmlAttr(inputId)}'"
-                : $"'FORMATTED_DISPLAY':'{HtmlAttr(inputId)}'";
+            var displayMap = $"'FORMATTED_DISPLAY':'{HtmlAttr(inputId)}'";
 
             var openJs = $"gLov.open({{title:'{title}',api:'{api}',columns:['{cols}'.split(',')].flat(),"
                        + $"fields:['{fields}'.split(',')].flat(),"
@@ -606,16 +604,38 @@ namespace Web_EIP_Restruct.Views.Components
                        + $"formatDisplay:{(string.IsNullOrWhiteSpace(fmt) ? "null" : $"function(d){{return {BuildLovDisplayExpression(fmt, "d")};}}")}"
                        + $",onConfirm:{cb}}})";
 
-            return "<div class=\"flex\">"
+            return "<div class=\"flex items-center\">"
                  + $"<input type=\"hidden\" id=\"{inputId}_hidden\" x-model=\"formData['{f}']\"{validateAttrs}/>"
                  + $"<input type=\"text\" id=\"{inputId}\" x-model=\"formData['{displayF}']\" readonly"
-                 + $" placeholder=\"{HtmlEnc(col.Placeholder.Coalesce("請選擇..."))}\""
-                 + " class=\"flex-1 px-3 py-2 border border-slate-300 rounded-l-lg text-sm bg-blue-600 text-white font-bold cursor-pointer focus:outline-none\"/>"
+                 + $" placeholder=\"{HtmlEnc(col.Placeholder.Coalesce("請選擇資料"))}\""
+                 + " class=\"block min-w-0 flex-1 px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm text-slate-700 bg-white placeholder:text-slate-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors\"/>"
                  + $"<button type=\"button\" onclick=\"{HtmlAttr(openJs)}\""
-                 + " class=\"px-3 border border-l-0 border-slate-300 rounded-r-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-blue-600 transition-colors\">"
+                 + " class=\"shrink-0 inline-flex items-center justify-center px-3 border border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors\">"
                  + "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\"/></svg>"
                  + "</button>"
                  + "</div>";
+        }
+
+        private static string GetEffectiveLovDisplayFormat(string? keyValue, string? keyDisplay, string? displayFormat, string fallbackField)
+        {
+            if (!string.IsNullOrWhiteSpace(displayFormat))
+            {
+                return displayFormat;
+            }
+
+            var valueField = string.IsNullOrWhiteSpace(keyValue) ? fallbackField : keyValue.Trim();
+            var displayField = string.IsNullOrWhiteSpace(keyDisplay) ? fallbackField : keyDisplay.Trim();
+
+            if (!string.IsNullOrWhiteSpace(valueField) &&
+                !string.IsNullOrWhiteSpace(displayField) &&
+                !string.Equals(valueField, displayField, StringComparison.OrdinalIgnoreCase))
+            {
+                return $"{{{valueField}}}-{{{displayField}}}";
+            }
+
+            return !string.IsNullOrWhiteSpace(displayField)
+                ? $"{{{displayField}}}"
+                : (!string.IsNullOrWhiteSpace(valueField) ? $"{{{valueField}}}" : string.Empty);
         }
 
         private static string BuildValidateAttrs(FormColumn col)

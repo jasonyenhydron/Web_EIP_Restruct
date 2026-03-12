@@ -3,7 +3,6 @@
     ViewData["Title"] = ViewBag.ProgramTitle ?? _viewName;
     ViewData["HidePopupFooterClose"] = false;
     ViewData["PopupFullscreenTargetId"] = "cmmRootPanel";
-    ViewData["ShowPopupTitleBar"] = false;
     Layout = "~/Views/Shared/_PopupLayout.cshtml";
 }
 
@@ -41,7 +40,14 @@
             allow-add="true"
             allow-update="true"
             allow-delete="true"
-            view-command-visible="true"
+            toolbar-compact="true"
+            toolbar-view-command-visible="true"
+            toolbar-edit-command-visible="true"
+            toolbar-delete-command-visible="true"
+            toolbar-nav-command-visible="true"
+            update-command-visible="false"
+            delete-command-visible="false"
+            view-command-visible="false"
             on-insert="cmmOpenCreate"
             on-view="cmmViewRecord"
             on-update="cmmEditRecord"

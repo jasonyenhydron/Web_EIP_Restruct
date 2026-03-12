@@ -1,7 +1,6 @@
 ﻿@{
     var _viewName = System.IO.Path.GetFileNameWithoutExtension(ViewContext.ExecutingFilePath);
     ViewData["Title"] = ViewBag.ProgramTitle ?? _viewName;
-    ViewData["ShowPopupTitleBar"] = false;
     Layout = "~/Views/Shared/_PopupLayout.cshtml";
     var leaveTypeLovApi = (ViewBag.LeaveTypeLovApi?.ToString() ?? "/api/lov/hrm/leave-types");
     var employeeLovApi = (ViewBag.EmployeeLovApi?.ToString() ?? "/api/lov/hrm/employees");
