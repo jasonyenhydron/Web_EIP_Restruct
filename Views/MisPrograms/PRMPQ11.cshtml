@@ -1,0 +1,65 @@
+﻿@model Web_EIP_Restruct.Models.ViewModels.PrmPq11ViewModel
+@{
+    var _viewName = System.IO.Path.GetFileNameWithoutExtension(ViewContext.ExecutingFilePath);
+    ViewData["Title"] = ViewBag.ProgramTitle ?? _viewName;
+    ViewData["HidePopupFooter"] = true;
+    Layout = "~/Views/Shared/_PopupLayout.cshtml";
+}
+
+<div class="absolute inset-0 p-2 bg-slate-100 overflow-hidden" x-data="prmpq11App()" x-init="init()">
+    <div class="bg-white rounded-xl border border-slate-200 h-full flex flex-col min-h-0 overflow-hidden">
+    <g-accordion id="prmpq11SearchAccordion" exclusive="true" auto-collapse-selector="#btnPrmPq11Search">
+        <g-accordion-panel title="查詢條件" icon="filter" active="true">
+            <div class=" grid grid-cols-1 md:grid-cols-4 gap-3">
+                <g-textbox label="廠商編號" x-model="search.vendorId"></g-textbox>
+                <g-textbox label="送貨單號" x-model="search.vendorShipNo"></g-textbox>
+                <g-textbox label="收料日期起" type="date" x-model="search.receiptDateFrom"></g-textbox>
+                <g-textbox label="收料日期迄" type="date" x-model="search.receiptDateTo"></g-textbox>
+            </div>
+            <div class="mt-3 flex items-center gap-2">
+                <g-button id="btnPrmPq11Search" text="查詢" icon="search" type="primary" onclick="window._prmpq11App?.executeQuery()"></g-button>
+            </div>
+        </g-accordion-panel>
+    </g-accordion>
+
+    <g-datagrid
+        id="prmPq11HeadGrid"
+        api="/api/internal/grid/PRMPQ11/select"
+        columns="PART_RECEIPT_NO:收料單號:160:left,RECEIPT_DATE:收料日期:140:left,VENDOR_ID:廠商:120:left,VENDOR_SHIP_NO:送貨單號:160:left"
+        pagination="true"
+        page-size="20"
+        row-numbers="true"
+        extra-class="flex-1 min-h-0 w-full">
+    </g-datagrid>
+    </div>
+</div>
+
+@section Scripts {
+    <g-js profile="popup" include-alpine="true" alpine-version="3.x.x"></g-js>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('prmpq11App', () => ({
+                search: {
+                    vendorId: '',
+                    vendorShipNo: '',
+                    receiptDateFrom: '',
+                    receiptDateTo: ''
+                },
+                init() {
+                    window._prmpq11App = this;
+                },
+                executeQuery() {
+                    document.getElementById('prmPq11HeadGrid')?.gDataGrid?.fetchData({
+                        DataMember: 'PRMPQ11',
+                        vendorId: this.search.vendorId || null,
+                        vendorShipNo: this.search.vendorShipNo || null,
+                        receiptDateFrom: this.search.receiptDateFrom || null,
+                        receiptDateTo: this.search.receiptDateTo || null
+                    });
+                }
+            }));
+        });
+    </script>
+}
+
+

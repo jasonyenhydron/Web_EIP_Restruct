@@ -1,0 +1,54 @@
+﻿<header class="dx-header w-full h-16 flex items-center justify-between px-6 z-10">
+    <div class="flex items-center">
+        <button id="sidebar-toggle" class="sidebar-toggle-btn inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors mr-2" type="button">
+            <div class="w-6 h-6 flex flex-col justify-center items-center gap-[6px]">
+                <span class="hamburger-line text-slate-500"></span>
+                <span class="hamburger-line text-slate-500"></span>
+                <span class="hamburger-line text-slate-500"></span>
+            </div>
+        </button>
+
+        <div class="flex items-center gap-3">
+            <div id="header-page-icon" class="text-slate-500">
+                @if (ViewBag.HeaderIcon != null)
+                {
+                    @Html.Raw(ViewBag.HeaderIcon)
+                }
+            </div>
+            <h2 class="text-xl font-semibold tracking-wide text-slate-800">
+                @(ViewBag.HeaderTitle ?? "系統首頁")
+            </h2>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+        <button class="relative inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors text-slate-500" type="button">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+            <span class="absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+        </button>
+
+        <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
+            <div class="text-right hidden md:block">
+                <div class="text-sm font-semibold text-slate-700">@(ViewBag.UserName ?? "User")</div>
+                <div class="text-xs text-slate-500">資訊部</div>
+            </div>
+
+            @{
+                string uiName = ViewBag.UserName ?? "User";
+                string avatar = uiName.Length >= 2 ? uiName.Substring(0, 2) : uiName;
+            }
+            <div class="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold border border-sky-200 shadow-sm cursor-pointer transition-colors">
+                @avatar
+            </div>
+        </div>
+
+        <a href="/Account/Logout" class="ml-2 inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors text-slate-500" title="登出">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+        </a>
+    </div>
+</header>
+

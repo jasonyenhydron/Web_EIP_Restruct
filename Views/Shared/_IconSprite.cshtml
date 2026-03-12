@@ -1,0 +1,15 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"></svg>
+<script>
+(function () {
+    fetch('/images/g-icons.svg')
+        .then((r) => r.text())
+        .then((txt) => {
+            const div = document.createElement('div');
+            div.style.display = 'none';
+            div.innerHTML = txt;
+            document.body.insertBefore(div, document.body.firstChild);
+        })
+        .catch(console.error);
+})();
+</script>
+

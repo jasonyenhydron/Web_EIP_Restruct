@@ -1,0 +1,39 @@
+﻿@{
+    ViewData["Title"] = "IDMGD01";
+    var queryColumns = """
+[
+  {"fieldName":"programNo","caption":"Program No","editor":"text","span":3,"placeholder":"IDMGD01"},
+  {"fieldName":"employeeId","caption":"Employee","editor":"lov","span":3,"lovTitle":"Employee","lovApi":"/api/internal/lov/EMPLOYEE","lovColumns":"employeeId,employeeName","lovFields":"employeeId,employeeName","lovKeyValue":"employeeId","lovKeyDisplay":"employeeName"},
+  {"fieldName":"displayCode","caption":"Display","editor":"select","span":2,"options":"Y:Yes,N:No"}
+]
+""";
+    var formColumns = """
+[
+  {"fieldName":"programNo","caption":"Program No","columnType":"Text","required":true,"isPrimaryKey":true,"placeholder":"IDMGD01"},
+  {"fieldName":"displayCode","caption":"Display","columnType":"Select","options":"Y:Yes,N:No"},
+  {"fieldName":"employeeId","caption":"Employee","columnType":"Lov","lovTitle":"Employee","lovApi":"/api/internal/lov/EMPLOYEE","lovColumns":"employeeId,employeeName","lovFields":"employeeId,employeeName","lovKeyValue":"employeeId","lovKeyDisplay":"employeeName"},
+  {"fieldName":"programType","caption":"Program Type","columnType":"Text"},
+  {"fieldName":"purpose","caption":"Purpose","columnType":"Textarea","colSpan":2},
+  {"fieldName":"planStartDevelopDate","caption":"Plan Start","columnType":"Date"},
+  {"fieldName":"planFinishDevelopDate","caption":"Plan Finish","columnType":"Date"},
+  {"fieldName":"planWorkHours","caption":"Plan Hours","columnType":"Number"},
+  {"fieldName":"realWorkHours","caption":"Real Hours","columnType":"Number"}
+]
+""";
+}
+
+@section Styles {
+    <g-style profile="grid"></g-style>
+}
+
+<g-datagrid id="idmgd01-grid"
+            title="IDMGD01 Program Maintain"
+            api="/api/internal/grid/IDMGD01"
+            columns="programNo:Program No,displayCode:Display,employeeId:Employee Id,employeeName:Employee Name,programType:Type,purpose:Purpose"
+            query-columns="@queryColumns"
+            form-columns="@formColumns">
+</g-datagrid>
+
+@section Scripts {
+    <g-js profile="dashboard" include-alpine="true" include-htmx="true"></g-js>
+}

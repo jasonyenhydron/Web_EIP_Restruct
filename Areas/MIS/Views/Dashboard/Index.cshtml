@@ -1,0 +1,105 @@
+﻿@{
+    ViewData["Title"] = "MIS Dashboard";
+}
+
+<section class="dashboard-shell">
+    <section class="hero-card">
+        <div>
+            <span class="hero-kicker">MIS Area</span>
+            <h1>Program Entry</h1>
+            <p>MIS 區域首頁，提供程式入口、重構規則與後續可擴充的 Program Wizard 方向。</p>
+        </div>
+        <div class="hero-actions">
+            <a class="hero-btn primary" asp-area="MIS" asp-controller="IDMGD01" asp-action="Index">Open IDMGD01</a>
+            <a class="hero-btn" asp-controller="Dashboard" asp-action="Index">Back Dashboard</a>
+        </div>
+    </section>
+
+    <section class="dashboard-stats">
+        <article class="landing-info">
+            <span>Area</span>
+            <h3>MIS</h3>
+            <p>目前已接入的 ERP 功能區。</p>
+        </article>
+        <article class="landing-info">
+            <span>Program</span>
+            <h3>IDMGD01</h3>
+            <p>程式資料維護範例，包含 Grid、Form 與 API。</p>
+        </article>
+        <article class="landing-info">
+            <span>Route</span>
+            <h3>/MIS/{programId}</h3>
+            <p>遵循 `SKILL.md` 定義的 Area + ProgramId 路由規範。</p>
+        </article>
+        <article class="landing-info">
+            <span>Mode</span>
+            <h3>Hybrid MVC</h3>
+            <p>Server Render + Internal API + TagHelper。</p>
+        </article>
+    </section>
+
+    <section class="dashboard-panels">
+        <article class="g-panel">
+            <div class="g-panel-header">
+                <div>
+                    <h2>Available Programs</h2>
+                    <p>目前 MIS 區可直接開啟的程式。</p>
+                </div>
+            </div>
+            <div class="dashboard-table-wrap">
+                <table class="g-grid-table">
+                    <thead>
+                        <tr>
+                            <th>Program ID</th>
+                            <th>Title</th>
+                            <th>Capability</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>IDMGD01</td>
+                            <td>Program Maintain</td>
+                            <td>Query / Add / Edit / Delete</td>
+                            <td>
+                                <a class="hero-btn primary" asp-area="MIS" asp-controller="IDMGD01" asp-action="Index">Open</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="g-panel">
+            <div class="g-panel-header">
+                <div>
+                    <h2>Build Rules</h2>
+                    <p>目前專案重構時遵循的核心規則。</p>
+                </div>
+            </div>
+            <div class="dashboard-owner-list">
+                <div class="dashboard-owner-item">
+                    <div>
+                        <strong>Area Routing</strong>
+                        <p>ERP 程式統一使用 `/{area}/{programId}` 路由。</p>
+                    </div>
+                    <span>01</span>
+                </div>
+                <div class="dashboard-owner-item">
+                    <div>
+                        <strong>TagHelper First</strong>
+                        <p>畫面優先使用 `g-datagrid`、`g-dataform` 等元件組裝。</p>
+                    </div>
+                    <span>02</span>
+                </div>
+                <div class="dashboard-owner-item">
+                    <div>
+                        <strong>Internal API</strong>
+                        <p>Grid、Form、LOV 透過 `/api/internal/...` 提供資料。</p>
+                    </div>
+                    <span>03</span>
+                </div>
+            </div>
+        </article>
+    </section>
+</section>

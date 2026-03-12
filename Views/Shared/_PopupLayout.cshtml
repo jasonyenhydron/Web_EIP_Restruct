@@ -1,0 +1,374 @@
+﻿@{
+    var title = (ViewData["Title"]?.ToString() ?? "").Trim();
+    var showPopupTitleBar = (ViewData["ShowPopupTitleBar"] as bool?) ?? true;
+    var showPopupBottomPanel = (ViewData["ShowPopupBottomPanel"] as bool?) ?? true;
+    var bottomButtonsRaw = (ViewData["PopupBottomButtons"]?.ToString() ?? "close").ToLowerInvariant();
+    var bottomButtons = bottomButtonsRaw
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(x => x.Trim())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    if (bottomButtons.Count == 0) bottomButtons.Add("close");
+    var bottomButtonsHtml = ViewData["PopupBottomButtonsHtml"]?.ToString() ?? "";
+
+    var baseWindowMovable = (ViewData["BaseWindowMovable"] as bool?) ?? true;
+    var baseWindowResizable = (ViewData["BaseWindowResizable"] as bool?) ?? true;
+    var baseWindowMaximizable = (ViewData["BaseWindowMaximizable"] as bool?) ?? true;
+    var baseWindowStartMaximized = (ViewData["BaseWindowStartMaximized"] as bool?) ?? true;
+    var baseWindowClosable = (ViewData["BaseWindowClosable"] as bool?) ?? true;
+    var baseWindowMinWidth = (ViewData["BaseWindowMinWidth"]?.ToString() ?? "640").Trim();
+    var baseWindowMinHeight = (ViewData["BaseWindowMinHeight"]?.ToString() ?? "420").Trim();
+}
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <script>
+        const originalWarn = console.warn;
+        console.warn = function () {
+            if (arguments.length > 0 && arguments[0] != null && typeof arguments[0] === "string" &&
+                arguments[0].includes("cdn.tailwindcss.com should not be used in production")) return;
+            originalWarn.apply(console, arguments);
+        };
+    </script>
+    <script>
+        (function () {
+            try {
+                var key = "eip.theme";
+                var saved = localStorage.getItem(key) || "blue-white";
+                document.documentElement.setAttribute("data-theme", saved);
+            } catch (e) {
+                document.documentElement.setAttribute("data-theme", "blue-white");
+            }
+        })();
+    </script>
+    <g-js profile="popup"
+          include-tailwind="true"
+          include-htmx="true"
+          htmx-version="1.9.12"
+          include-theme="true"
+          include-alpine="true"
+          alpine-version="3.x.x"></g-js>
+    <g-style profile="popup"></g-style>
+    @RenderSection("Styles", required: false)
+</head>
+
+<body class="g-popup-page">
+    <partial name="~/Views/Shared/_IconSprite.cshtml" />
+
+    <div class="g-base-window-layer">
+        <div id="gBaseWindow"
+             class="g-popup-window @(baseWindowStartMaximized ? "is-maximized" : "")"
+             x-data="gPopupWindow()"
+             x-init="init()"
+             data-min-width="@baseWindowMinWidth"
+             data-min-height="@baseWindowMinHeight"
+             data-movable="@baseWindowMovable.ToString().ToLowerInvariant()"
+             data-resizable="@baseWindowResizable.ToString().ToLowerInvariant()"
+             data-maximizable="@baseWindowMaximizable.ToString().ToLowerInvariant()">
+            @if (showPopupTitleBar)
+            {
+                <div id="gBaseTitlebar" class="g-popup-titlebar shrink-0 h-16 px-5 flex items-center justify-between @(baseWindowMovable ? "" : "no-move")">
+                    <div class="text-3xl font-semibold tracking-wide truncate">@title</div>
+                    <div class="flex items-center gap-2">
+                        @if (baseWindowMaximizable)
+                        {
+                            <button type="button" class="g-popup-title-btn h-9 w-9 rounded-md inline-flex items-center justify-center transition-colors"
+                                    title="放大" onclick="gPopupSetWindowMode('max')">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 3H5a2 2 0 00-2 2v3m16-5h-3m3 0v3M3 16v3a2 2 0 002 2h3m11-5v3a2 2 0 01-2 2h-3"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="g-popup-title-btn h-9 w-9 rounded-md inline-flex items-center justify-center transition-colors"
+                                    title="還原" onclick="gPopupSetWindowMode('normal')">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                </svg>
+                            </button>
+                        }
+                        @if (baseWindowClosable)
+                        {
+                            <button type="button" class="g-popup-title-btn h-9 w-9 rounded-md inline-flex items-center justify-center transition-colors"
+                                    title="關閉" onclick="gPopupTryClose()">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/>
+                                </svg>
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="g-popup-content flex-1 relative">
+                @RenderBody()
+            </div>
+
+            @if (showPopupBottomPanel)
+            {
+                <div class="g-popup-bottom shrink-0 px-4 py-2 flex justify-end items-center gap-2">
+                    @Html.Raw(bottomButtonsHtml)
+                    @if (bottomButtons.Contains("close") && baseWindowClosable)
+                    {
+                        <button type="button"
+                                onclick="gPopupTryClose()"
+                                class="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow"
+                                title="關閉">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/>
+                            </svg>
+                            關閉
+                        </button>
+                    }
+                </div>
+            }
+
+            @if (baseWindowResizable)
+            {
+                <div id="gBaseResizeHandle" class="g-popup-resize-handle" title="拖曳調整大小"></div>
+            }
+        </div>
+    </div>
+
+    <g-messager />
+    <g-error-message />
+    <script>
+        document.addEventListener("alpine:init", () => {
+            Alpine.data("gPopupWindow", () => ({
+                box: null,
+                titlebar: null,
+                resizeHandle: null,
+                canMove: false,
+                canResize: false,
+                canMax: false,
+                minWidth: 640,
+                minHeight: 420,
+                state: {
+                    dragging: false,
+                    resizing: false,
+                    startX: 0,
+                    startY: 0,
+                    startLeft: 0,
+                    startTop: 0,
+                    startWidth: 0,
+                    startHeight: 0,
+                    prevRect: null
+                },
+                init() {
+                    this.box = this.$el;
+                    this.titlebar = document.getElementById("gBaseTitlebar");
+                    this.resizeHandle = document.getElementById("gBaseResizeHandle");
+                    if (!this.box) return;
+
+                    this.canMove = this.box.dataset.movable === "true";
+                    this.canResize = this.box.dataset.resizable === "true";
+                    this.canMax = this.box.dataset.maximizable === "true";
+                    this.minWidth = parseInt(this.box.dataset.minWidth || "640", 10);
+                    this.minHeight = parseInt(this.box.dataset.minHeight || "420", 10);
+
+                    this.bindEvents();
+
+                    window.gPopupSetWindowMode = (mode) => this.setWindowMode(mode);
+                    window.gPopupHasUnsavedChanges = () => this.hasUnsavedChanges();
+                    window.gPopupDoClose = () => this.doClose();
+                    window.gPopupTryClose = () => this.tryClose();
+                },
+                captureRect() {
+                    const r = this.box.getBoundingClientRect();
+                    return { left: r.left, top: r.top, width: r.width, height: r.height };
+                },
+                applyRect(rect) {
+                    if (!rect) return;
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+                    const width = Math.min(Math.max(this.minWidth, rect.width), vw);
+                    const height = Math.min(Math.max(this.minHeight, rect.height), vh);
+                    const left = Math.min(Math.max(0, rect.left), Math.max(0, vw - width));
+                    const top = Math.min(Math.max(0, rect.top), Math.max(0, vh - height));
+                    this.box.style.left = `${left}px`;
+                    this.box.style.top = `${top}px`;
+                    this.box.style.width = `${width}px`;
+                    this.box.style.height = `${height}px`;
+                    this.box.style.transform = "none";
+                },
+                setWindowMode(mode) {
+                    if (!this.canMax && mode === "max") return;
+
+                    if (mode === "max") {
+                        if (!this.box.classList.contains("is-maximized")) this.state.prevRect = this.captureRect();
+                        this.box.classList.add("is-maximized");
+                        return;
+                    }
+
+                    if (mode === "toggle") {
+                        this.setWindowMode(this.box.classList.contains("is-maximized") ? "normal" : "max");
+                        return;
+                    }
+
+                    this.box.classList.remove("is-maximized");
+                    if (this.state.prevRect) {
+                        this.applyRect(this.state.prevRect);
+                    } else {
+                        this.box.style.left = "50%";
+                        this.box.style.top = "50%";
+                        this.box.style.width = "95vw";
+                        this.box.style.height = "95vh";
+                        this.box.style.transform = "translate(-50%, -50%)";
+                    }
+                },
+                bindEvents() {
+                    if (this.canMove && this.titlebar) {
+                        this.titlebar.addEventListener("mousedown", (e) => {
+                            if (this.box.classList.contains("is-maximized")) return;
+                            if (e.button !== 0) return;
+                            if (e.target.closest("button")) return;
+
+                            const rect = this.box.getBoundingClientRect();
+                            this.state.dragging = true;
+                            this.state.startX = e.clientX;
+                            this.state.startY = e.clientY;
+                            this.state.startLeft = rect.left;
+                            this.state.startTop = rect.top;
+                            this.box.classList.add("is-dragging");
+                            this.box.style.transform = "none";
+                            e.preventDefault();
+                        });
+                    }
+
+                    if (this.canResize && this.resizeHandle) {
+                        this.resizeHandle.addEventListener("mousedown", (e) => {
+                            if (this.box.classList.contains("is-maximized")) return;
+                            if (e.button !== 0) return;
+
+                            const rect = this.box.getBoundingClientRect();
+                            this.state.resizing = true;
+                            this.state.startX = e.clientX;
+                            this.state.startY = e.clientY;
+                            this.state.startWidth = rect.width;
+                            this.state.startHeight = rect.height;
+                            this.box.classList.add("is-resizing");
+                            this.box.style.transform = "none";
+                            e.preventDefault();
+                        });
+                    }
+
+                    if (this.canMax && this.titlebar) {
+                        this.titlebar.addEventListener("dblclick", (e) => {
+                            if (e.target.closest("button")) return;
+                            this.setWindowMode("toggle");
+                        });
+                    }
+
+                    window.addEventListener("mousemove", (e) => {
+                        if (this.state.dragging) {
+                            const dx = e.clientX - this.state.startX;
+                            const dy = e.clientY - this.state.startY;
+                            const width = this.box.offsetWidth;
+                            const height = this.box.offsetHeight;
+                            const maxLeft = Math.max(0, window.innerWidth - width);
+                            const maxTop = Math.max(0, window.innerHeight - height);
+                            const nextLeft = Math.min(Math.max(0, this.state.startLeft + dx), maxLeft);
+                            const nextTop = Math.min(Math.max(0, this.state.startTop + dy), maxTop);
+                            this.box.style.left = `${nextLeft}px`;
+                            this.box.style.top = `${nextTop}px`;
+                            return;
+                        }
+
+                        if (this.state.resizing) {
+                            const dx = e.clientX - this.state.startX;
+                            const dy = e.clientY - this.state.startY;
+                            const maxWidth = window.innerWidth - this.box.offsetLeft;
+                            const maxHeight = window.innerHeight - this.box.offsetTop;
+                            const nextWidth = Math.min(Math.max(this.minWidth, this.state.startWidth + dx), maxWidth);
+                            const nextHeight = Math.min(Math.max(this.minHeight, this.state.startHeight + dy), maxHeight);
+                            this.box.style.width = `${nextWidth}px`;
+                            this.box.style.height = `${nextHeight}px`;
+                        }
+                    });
+
+                    window.addEventListener("mouseup", () => {
+                        if (this.state.dragging) {
+                            this.state.dragging = false;
+                            this.box.classList.remove("is-dragging");
+                            this.state.prevRect = this.captureRect();
+                        }
+                        if (this.state.resizing) {
+                            this.state.resizing = false;
+                            this.box.classList.remove("is-resizing");
+                            this.state.prevRect = this.captureRect();
+                        }
+                    });
+
+                    window.addEventListener("resize", () => {
+                        if (this.box.classList.contains("is-maximized")) return;
+                        this.applyRect(this.captureRect());
+                        this.state.prevRect = this.captureRect();
+                    });
+
+                    window.addEventListener("keydown", (e) => {
+                        if (e.key === "Escape") this.tryClose();
+                    });
+                },
+                hasUnsavedChanges() {
+                    if (window.__hasUnsavedChanges === true) return true;
+
+                    const stateSelectors = [
+                        "[data-dataform-state='edit']",
+                        "[data-dataform-state='insert']",
+                        "[data-form-mode='edit']",
+                        "[data-form-mode='insert']",
+                        "[data-form-mode='create']",
+                        "[data-record-mode='edit']",
+                        "[data-record-mode='insert']",
+                        "[data-record-mode='create']"
+                    ];
+                    if (document.querySelector(stateSelectors.join(","))) return true;
+
+                    const grids = document.querySelectorAll("[id]");
+                    for (const el of grids) {
+                        const g = el.gDataGrid;
+                        if (g && g.editingId !== null && g.editingId !== undefined && g.editingId !== "") return true;
+                    }
+
+                    const appCandidates = [window._idmApp, window._hrmApp, window._cmmgd16App, window._app];
+                    for (const app of appCandidates) {
+                        const mode = app?.recordMode;
+                        if (mode === "edit" || mode === "create" || mode === "insert") return true;
+                    }
+
+                    return false;
+                },
+                doClose() {
+                    if (window.parent && window.parent !== window && typeof window.parent.closeExecutionModal === "function") {
+                        window.parent.closeExecutionModal();
+                        return;
+                    }
+                    if (window.opener) {
+                        window.close();
+                        return;
+                    }
+                    history.back();
+                },
+                tryClose() {
+                    if (!this.hasUnsavedChanges()) {
+                        this.doClose();
+                        return;
+                    }
+
+                    const msg = "尚有未儲存的變更，確定要關閉嗎？";
+                    if (window.gMsg && typeof window.gMsg.confirm === "function") {
+                        window.gMsg.confirm("關閉確認", msg, () => this.doClose(), null, "warning");
+                        return;
+                    }
+                    if (window.confirm(msg)) this.doClose();
+                }
+            }));
+        });
+    </script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
+

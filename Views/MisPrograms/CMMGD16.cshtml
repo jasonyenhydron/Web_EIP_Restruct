@@ -1,0 +1,217 @@
+﻿@{
+    var _viewName = System.IO.Path.GetFileNameWithoutExtension(ViewContext.ExecutingFilePath);
+    ViewData["Title"] = ViewBag.ProgramTitle ?? _viewName;
+    ViewData["HidePopupFooterClose"] = false;
+    ViewData["PopupFullscreenTargetId"] = "cmmRootPanel";
+    ViewData["ShowPopupTitleBar"] = false;
+    Layout = "~/Views/Shared/_PopupLayout.cshtml";
+}
+
+@section Styles {
+    <g-style profile="grid"></g-style>
+}
+
+<div class="absolute inset-0 p-0 overflow-hidden" x-data="cmmgd16App()" x-init="init()">
+    <div id="cmmRootPanel" class="h-full flex flex-col min-h-0 overflow-hidden">
+        <div class="border-b border-slate-200 px-4 py-2.5">
+            <h4 class="m-0 text-base font-semibold text-slate-700">業務員維護查詢</h4>
+        </div>
+        <g-datagrid
+            id="cmmGrid"
+            api="/api/internal/grid/CMMGD16/select"
+            columns="AGENT_NO:業務員編號:150:left,AGENT_NAME:業務員名稱:180:left,EMPLOYEE_ID:員工編號:120:left,BONUS_TYPE:獎金類別:100:center,PRODUCT_LINE_ID:產品線:100:center,AGENT_AREA_CODE:業務區域:100:center,AGENT_STATUS:狀態:80:center"
+            query-columns='[
+                {"FieldName":"agentNo","Caption":"業務員編號","Condition":"%","DataType":"string","Editor":"text","Span":3},
+                {"FieldName":"agentName","Caption":"業務員名稱","Condition":"%%","DataType":"string","Editor":"text","Span":3},
+                {"FieldName":"employeeId","Caption":"員工編號","Condition":"=","DataType":"string","Editor":"lovinput","DefaultMethod":"openCmmEmployeeLovQuery","Span":3},
+                {"FieldName":"bonusType","Caption":"獎金類別","Condition":"=","DataType":"string","Editor":"text","Span":3},
+                {"FieldName":"productLineId","Caption":"產品線","Condition":"=","DataType":"string","Editor":"text","Span":2},
+                {"FieldName":"agentAreaCode","Caption":"業務區域","Condition":"=","DataType":"string","Editor":"text","Span":2},
+                {"FieldName":"statusFrom","Caption":"狀態起 >=","Condition":">=","DataType":"string","Editor":"text","DefaultValue":"00","Span":2},
+                {"FieldName":"statusTo","Caption":"狀態迄 <=","Condition":"<=","DataType":"string","Editor":"text","DefaultValue":"99","Span":2}
+            ]'
+            pagination="true"
+            page-size="20"
+            row-numbers="true"
+            query-auto-column="false"
+            always-close="false"
+            not-init-grid="true"
+            edit-mode="form"
+            auto-apply="false"
+            allow-add="true"
+            allow-update="true"
+            allow-delete="true"
+            view-command-visible="true"
+            on-insert="cmmOpenCreate"
+            on-view="cmmViewRecord"
+            on-update="cmmEditRecord"
+            @@delete="document.getElementById('cmmGrid')?.gDataGrid?.confirmDelete($event.detail.row, { confirmMessage: () => `確定刪除業務員 ${$event.detail.row?.AGENT_NO || ''}？`, url: '/api/internal/grid/CMMGD16/delete' })"
+            extra-class="flex-1 min-h-0 w-full">
+        </g-datagrid>
+    </div>
+
+<g-dialog id="dlgCmmRecord" title="業務員資料" width="lg">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <g-textbox label="業務員編號"
+                   required="true"
+                   x-model="formRecord.AGENT_NO"
+                   x-bind-readonly="recordMode!=='create'">
+        </g-textbox>
+
+        <g-textbox label="業務員名稱"
+                   required="true"
+                   x-model="formRecord.AGENT_NAME"
+                   x-bind-readonly="recordMode==='view'">
+        </g-textbox>
+
+        <g-textbox label="員工編號"
+                   x-model="formRecord.EMPLOYEE_ID"
+                   x-bind-readonly="recordMode==='view'">
+        </g-textbox>
+
+        <g-textbox label="獎金類別"
+                   x-model="formRecord.BONUS_TYPE"
+                   x-bind-readonly="recordMode==='view'">
+        </g-textbox>
+
+        <g-textbox label="產品線"
+                   x-model="formRecord.PRODUCT_LINE_ID"
+                   x-bind-readonly="recordMode==='view'">
+        </g-textbox>
+
+        <g-textbox label="業務區域"
+                   x-model="formRecord.AGENT_AREA_CODE"
+                   x-bind-readonly="recordMode==='view'">
+        </g-textbox>
+
+        <g-textbox label="狀態"
+                   x-model="formRecord.AGENT_STATUS"
+                   x-bind-readonly="recordMode==='view'">
+        </g-textbox>
+
+        <g-textbox label="手機"
+                   x-model="formRecord.MOBIL_PHONE"
+                   x-bind-readonly="recordMode==='view'">
+        </g-textbox>
+
+        <g-textbox label="地址"
+                   x-model="formRecord.ADDRESS"
+                   x-bind-readonly="recordMode==='view'"
+                   wrapper-class="flex flex-col gap-1 md:col-span-2">
+        </g-textbox>
+    </div>
+
+    <div class="flex justify-end gap-2 mt-5 pt-4 border-t border-slate-100">
+        <g-button text="取消" icon="close" type="secondary" onclick="gDialogClose('dlgCmmRecord')"></g-button>
+        <g-button text="儲存" icon="save" type="success" x-show="recordMode!=='view'" onclick="window._cmmgd16App?.saveRecord()"></g-button>
+    </div>
+</g-dialog>
+</div>
+
+@section Scripts {
+    <g-js profile="grid" include-alpine="true" alpine-version="3.x.x"></g-js>
+    <script>
+        const _cmmEmployeeLov = {
+            title: "選擇員工",
+            api: @Html.Raw(System.Text.Json.JsonSerializer.Serialize("/api/lov/hrm/employees")),
+            columns: ["員工編號", "員工姓名", "ID"],
+            fields: ["employee_no", "employee_name", "employee_id"]
+        };
+
+        function openCmmEmployeeLov(ctx) {
+            const c = ctx || {};
+            openGenericLov(_cmmEmployeeLov.title, _cmmEmployeeLov.api, _cmmEmployeeLov.columns, _cmmEmployeeLov.fields, null, null,
+                function (selected) {
+                    const employeeId = selected?.employee_id ?? "";
+                    if (typeof c.setValue === "function") c.setValue(employeeId);
+                });
+        }
+
+        function openCmmEmployeeLovQuery(fieldName, currentValue, queryValues, ctx) {
+            openGenericLov(_cmmEmployeeLov.title, _cmmEmployeeLov.api, _cmmEmployeeLov.columns, _cmmEmployeeLov.fields, null, null,
+                function (selected) {
+                    const employeeId = selected?.employee_id ?? "";
+                    if (queryValues && fieldName) queryValues[fieldName] = employeeId;
+                },
+                {
+                    initialQuery: String(currentValue || "").trim(),
+                    sourceInputId: ctx?.sourceInputId || ""
+                });
+        }
+
+        document.addEventListener("alpine:init", () => {
+            Alpine.data("cmmgd16App", () => ({
+                recordMode: "view", // view | edit | create
+                formRecord: {},
+                init() {
+                    window._cmmgd16App = this;
+                    window.cmmOpenCreate = () => window._cmmgd16App?.openCreate();
+                    window.cmmViewRecord = (row) => window._cmmgd16App?.viewRecord(row);
+                    window.cmmEditRecord = (row) => window._cmmgd16App?.editRecord(row);
+                    document.getElementById("cmmGrid")?.gDataGrid?.executeQuery?.();
+                },
+                normalizeRecord(row) {
+                    return {
+                        ROWID: row?.ROWID ?? "",
+                        AGENT_ID: row?.AGENT_ID ?? "",
+                        AGENT_NO: row?.AGENT_NO ?? "",
+                        AGENT_NAME: row?.AGENT_NAME ?? "",
+                        EMPLOYEE_ID: row?.EMPLOYEE_ID ?? "",
+                        BONUS_TYPE: row?.BONUS_TYPE ?? "",
+                        PRODUCT_LINE_ID: row?.PRODUCT_LINE_ID ?? "",
+                        AGENT_AREA_CODE: row?.AGENT_AREA_CODE ?? "",
+                        AGENT_STATUS: row?.AGENT_STATUS ?? "00",
+                        MOBIL_PHONE: row?.MOBIL_PHONE ?? "",
+                        ADDRESS: row?.ADDRESS ?? "",
+                        AGENT_NAME2: row?.AGENT_NAME2 ?? ""
+                    };
+                },
+                openCreate() {
+                    this.recordMode = "create";
+                    this.formRecord = this.normalizeRecord({ AGENT_STATUS: "00" });
+                    gDialogOpen("dlgCmmRecord");
+                },
+                viewRecord(row) {
+                    this.recordMode = "view";
+                    this.formRecord = this.normalizeRecord(row);
+                    gDialogOpen("dlgCmmRecord");
+                },
+                editRecord(row) {
+                    this.recordMode = "edit";
+                    this.formRecord = this.normalizeRecord(row);
+                    gDialogOpen("dlgCmmRecord");
+                },
+                async saveRecord() {
+                    const payload = { ...this.formRecord };
+                    if (!payload.AGENT_NO || !payload.AGENT_NAME) {
+                        gToast("業務員編號 / 業務員名稱為必填", "warning");
+                        return;
+                    }
+                    try {
+                        const isCreate = this.recordMode === "create";
+                        const api = isCreate ? "/api/internal/grid/CMMGD16/insert" : "/api/internal/grid/CMMGD16/update";
+                        const res = await fetch(api, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
+                        const result = await res.json();
+                        if (!res.ok || result.status !== "success") {
+                            gToast("儲存失敗: " + (result.message || res.statusText), "error");
+                            return;
+                        }
+                        gDialogClose("dlgCmmRecord");
+                        gToast(isCreate ? "新增成功" : "更新成功", "success");
+                        await this.executeQuery();
+                    } catch (e) {
+                        gToast("儲存失敗: " + e, "error");
+                    }
+                },
+                async executeQuery() {
+                    document.getElementById("cmmGrid")?.gDataGrid?.executeQuery?.();
+                }
+            }));
+        });
+    </script>
+}
+

@@ -1,0 +1,119 @@
+﻿@{
+    Layout = null;
+    ViewData["Title"] = "Logon";
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Web EIP</title>
+    <script>
+        (function () {
+            try {
+                var theme = localStorage.getItem("eip.theme") || "paper";
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch (_) {
+                document.documentElement.setAttribute("data-theme", "paper");
+            }
+        })();
+    </script>
+    <g-js profile="layout" include-tailwind="true" include-theme="true"></g-js>
+    <g-style profile="layout"></g-style>
+</head>
+<body class="logon-body">
+    <div class="logon-shell">
+        <section class="logon-side">
+            <span class="hero-kicker">Secure Access</span>
+            <h1>企業入口登入</h1>
+            <p>登入後可進入 ERP/EIP 內部工作區，包含 Dashboard、MIS 功能入口與程式維護頁面 `IDMGD01`。</p>
+            <div class="logon-tags">
+                <span>Session</span>
+                <span>Area</span>
+                <span>Internal API</span>
+                <span>Theme Aware</span>
+            </div>
+        </section>
+        <section class="logon-panel">
+            <div class="logon-head">
+                <div>
+                    <strong>Logon</strong>
+                    <p>請輸入帳號、密碼與資料來源。</p>
+                </div>
+                <button type="button" class="hero-btn" data-theme-cycle>Theme</button>
+            </div>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="logon-error">@ViewBag.Error</div>
+            }
+
+            <form asp-controller="Account" asp-action="Logon" method="post" id="loginForm" class="logon-form">
+                @Html.AntiForgeryToken()
+                <label>
+                    <span>帳號</span>
+                    <input type="text" name="username" id="username" value="@ViewBag.Username" required />
+                </label>
+                <label>
+                    <span>密碼</span>
+                    <input type="password" name="password" id="password" required />
+                </label>
+                <label>
+                    <span>資料來源</span>
+                    <select name="tns" id="tns" required>
+                        @if (ViewBag.TnsList != null)
+                        {
+                            foreach (var tnsName in ViewBag.TnsList)
+                            {
+                                <option value="@tnsName" selected="@(ViewBag.Tns == tnsName)">@tnsName</option>
+                            }
+                        }
+                    </select>
+                </label>
+                <label class="logon-check">
+                    <input type="checkbox" name="use_defaults" id="use_defaults" checked />
+                    <span>使用預設語系與日期格式</span>
+                </label>
+                <div id="lang_settings" class="logon-inline hidden">
+                    <label>
+                        <span>語系</span>
+                        <select name="language" id="language">
+                            <option value="TW">繁體中文</option>
+                            <option value="US">English</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>日期格式</span>
+                        <select name="date_format" id="date_format">
+                            <option value="CE">CE</option>
+                            <option value="ROC">ROC</option>
+                        </select>
+                    </label>
+                </div>
+                <label class="logon-check">
+                    <input type="checkbox" name="test_mode" id="test_mode" />
+                    <span>啟用測試模式</span>
+                </label>
+                <label>
+                    <span>工作目錄</span>
+                    <input type="text" name="work_dir" id="work_dir" readonly />
+                </label>
+                <div class="logon-actions">
+                    <button type="submit" class="hero-btn primary" id="loginBtn">登入</button>
+                    <a class="hero-btn" asp-controller="Home" asp-action="Index">返回首頁</a>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div id="loadingModal" class="loading-modal hidden">
+        <div class="loading-card">
+            <div class="loading-spinner"></div>
+            <strong>登入中</strong>
+            <p id="loadingMessage">正在驗證帳號與密碼...</p>
+        </div>
+    </div>
+
+    <script src="~/js/login.js" asp-append-version="true"></script>
+</body>
+</html>

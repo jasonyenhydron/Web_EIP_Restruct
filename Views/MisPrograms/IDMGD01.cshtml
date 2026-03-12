@@ -1,0 +1,113 @@
+﻿@{
+    ViewData["Title"] = ViewBag.ProgramTitle ?? System.IO.Path.GetFileNameWithoutExtension(ViewContext.ExecutingFilePath);
+    ViewData["HidePopupFooterClose"] = false;
+    ViewData["PopupFullscreenTargetId"] = "idmgRootPanel";
+    Layout = "~/Views/Shared/_PopupLayout.cshtml";
+    var employeeLov = ViewBag.EmployeeLov as Web_EIP_Restruct.Models.Lov.LovInputConfig ?? new();
+    var employeeLovTitleJson = System.Text.Json.JsonSerializer.Serialize(employeeLov.Title);
+    var employeeLovApiJson = System.Text.Json.JsonSerializer.Serialize(employeeLov.Api);
+    var employeeLovColumnsJson = System.Text.Json.JsonSerializer.Serialize(employeeLov.Columns);
+    var employeeLovFieldsJson = System.Text.Json.JsonSerializer.Serialize(employeeLov.Fields);
+}
+
+@section Styles {
+    <g-style profile="grid"></g-style>
+}
+
+<div class="absolute inset-0 p-0 idmg-shell overflow-hidden" x-data="idmgd01App()" x-init="init()">
+<div id="idmgRootPanel" class="idmg-panel flex flex-col h-full min-h-0 overflow-y-auto overflow-x-hidden">
+
+    <div class="flex flex-col flex-1 min-h-0">
+        <g-datagrid id="idmGrid"
+                    api="/api/internal/grid/IDMGD01/select"
+                    id-field="programNo"
+                    columns="programNo:程式編號:150:left,employeeId:員工編號:120:left,displayCode:顯示碼:80:center,employeeName:員工姓名:180:left,programType:程式類型:120:left,purpose:用途說明:240:left"
+                    query-columns='[
+                        {"FieldName":"programNo","Caption":"程式編號","Condition":"%","DataType":"string","Editor":"gtext","Span":3},
+                        {"FieldName":"employeeId","Caption":"員工編號","Condition":"=","DataType":"string","Editor":"lovinput","LovTitle":@Html.Raw(employeeLovTitleJson),"LovApi":"/api/internal/lov/EMPLOYEE","LovColumns":"employeeId,employeeName","LovFields":"employeeId,employeeName","LovKeyValue":"employeeId","LovKeyDisplay":"employeeName","LovDisplayFormat":"{employeeId}-{employeeName}","Span":3},
+                        {"FieldName":"displayCode","Caption":"顯示碼","Condition":"=","DataType":"string","Editor":"infocombobox","EditorOptions":"Y=是;N=否","Span":2}
+                    ]'
+                    form-columns='[
+                        {"FieldName":"programNo","Caption":"程式編號","ColumnType":"gtext","Required":true,"IsPrimaryKey":true,"Placeholder":"例如 IDMGD99"},
+                        {"FieldName":"displayCode","Caption":"顯示碼","ColumnType":"gcombobox","Options":"Y:Y - 是,N:N - 否"},
+                        {"FieldName":"employeeId","Caption":"員工編號","ColumnType":"lovinput","LovTitle":"員工資料","LovApi":"/api/internal/lov/EMPLOYEE","LovColumns":"employeeId,employeeName","LovFields":"employeeId,employeeName","LovKeyValue":"employeeId","LovKeyDisplay":"employeeName","LovDisplayFormat":"{employeeId}-{employeeName}"},
+                        {"FieldName":"programType","Caption":"程式類型","ColumnType":"gtext"},
+                        {"FieldName":"purpose","Caption":"用途說明","ColumnType":"gtext","ColSpan":2},
+                        {"FieldName":"planStartDevelopDate","Caption":"預計開始日期","ColumnType":"date"},
+                        {"FieldName":"planFinishDevelopDate","Caption":"預計完成日期","ColumnType":"date"},
+                        {"FieldName":"planWorkHours","Caption":"預計工時","ColumnType":"number"},
+                        {"FieldName":"realWorkHours","Caption":"實際工時","ColumnType":"number"}
+                    ]'
+                    pagination="true"
+                    page-list="20,50,100"
+                    page-size="20"
+                    always-close="false"
+                    not-init-grid="false"
+                    row-numbers="true"
+                    edit-mode="form"
+                    query-auto-column="false"
+                    allow-add="true"
+                    allow-update="true"
+                    allow-delete="true"
+                    view-command-visible="true"
+                    on-load-success="idmGridLoaded"
+                    on-row-click="idmSelectProgram"
+                    @@delete="document.getElementById('idmGrid')?.gDataGrid?.confirmDelete($event.detail.row, { confirmMessage: () => `確定刪除程式 ${$event.detail.row?.programNo || ''}？`, url: '/api/internal/grid/IDMGD01/delete' })"
+                    extra-class="flex-1 min-h-0 max-h-[52vh]"
+                    clean-style="false"></g-datagrid>
+
+        <div class="idmg-block rounded-none border-x-0 border-t px-3 py-2 text-sm text-slate-700">
+            目前選取：<span class="font-semibold" x-text="selectedProgram?.programNo || '-'"></span>
+            <span class="text-slate-400 ml-2" x-text="selectedProgram?.purpose || '請先從上方清單選取程式。'"></span>
+        </div>
+
+    </div>
+
+</div>
+</div>
+
+@section Scripts {
+    <g-js profile="grid"
+          include-alpine="true"
+          alpine-version="3.x.x"
+          include-htmx="true"
+          htmx-version="1.9.12"
+          extras="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></g-js>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('idmgd01App', () => ({
+                programs: [],
+                selectedProgram: null,
+
+                init() {
+                    window.gDataGridRuntime?.registerAppCallbacks(this, {
+                        appKey: '_idmApp',
+                        callbacks: {
+                            idmSelectProgram: 'selectProgram',
+                            idmGridLoaded: 'onGridLoaded'
+                        }
+                    });
+                    this.executeQuery();
+                },
+
+                async executeQuery() {
+                    await window.gDataGridRuntime?.executeGridQuery('idmGrid');
+                },
+
+                async onGridLoaded(rows) {
+                    this.programs = rows || [];
+                    this.selectedProgram = this.programs.length > 0
+                        ? window.gDataGridRuntime?.cloneData(this.programs[0], null)
+                        : null;
+                },
+
+                selectProgram(row) {
+                    this.selectedProgram = row
+                        ? window.gDataGridRuntime?.cloneData(row, null)
+                        : null;
+                }
+            }));
+        });
+    </script>
+}
+

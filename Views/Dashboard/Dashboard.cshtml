@@ -1,0 +1,161 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    ViewBag.HeaderTitle = "儀表板";
+    ViewBag.HeaderIcon = "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z'/></svg>";
+
+    var userName = (ViewBag.UserName ?? ViewBag.Username ?? "PRG") as string;
+    var now = DateTime.Now;
+    var today = now.ToString("yyyy-MM-dd");
+    var dateChip = now.ToString("yyyy-MM-dd");
+    var timeText = now.ToString("HH:mm");
+    var dow = now.ToString("ddd, MMM dd").ToUpperInvariant();
+}
+
+<div class="flex h-screen dash-shell overflow-hidden">
+    <partial name="Components/_Sidebar" />
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <partial name="Components/_Header" />
+
+        <main class="flex-1 overflow-auto p-5">
+            <section class="dash-hero mb-6 overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2">
+                    <div class="dash-hero-left hidden lg:flex items-center justify-center py-8 px-6 relative">
+                        <svg class="w-28 h-28 text-white/55" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+                        </svg>
+                        <span class="absolute top-6 right-12 w-3 h-3 rounded-full bg-emerald-400"></span>
+                        <span class="absolute bottom-6 left-12 w-2 h-2 rounded-full bg-indigo-300"></span>
+                    </div>
+                    <div class="p-6 lg:p-7 flex items-center justify-between gap-4">
+                        <div>
+                            <span class="inline-flex px-4 py-1 rounded-full text-xs font-semibold dash-chip mb-3">系統狀態：營運正常</span>
+                            <h1 class="text-2xl font-extrabold mb-2">午安，@userName！</h1>
+                            <p class="text-blue-100 text-base">今日有 <b>3</b> 項待辦事項與 <b>1</b> 則新公告。</p>
+                        </div>
+                        <div class="text-right shrink-0 hidden sm:block">
+                            <div class="px-5 py-2 rounded-2xl bg-white/18 border border-white/20 font-bold text-xl">@dateChip</div>
+                            <div class="mt-3 text-sm text-blue-100">● 最後登入：5:42 下午</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+                <div class="xl:col-span-8 space-y-5">
+                    <section class="dash-panel">
+                        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592L5.5 14H3a1 1 0 01-1-1v-2a1 1 0 011-1h2.5l2.083-5.832A1.76 1.76 0 0111 4.76zM17 9v6m3-4v2" /></svg>
+                                最新公告
+                            </h2>
+                            <a href="#" class="text-blue-600 text-sm font-semibold">查看全部 →</a>
+                        </div>
+                        <div>
+                            <article class="px-5 py-4 border-b border-slate-100">
+                                <div class="inline-flex text-sm px-2 py-0.5 rounded bg-red-50 text-red-600 font-semibold">置頂</div>
+                                <h3 class="text-3xl font-bold text-slate-900 mt-2">2026 年度員工旅遊調查開始</h3>
+                                <p class="text-slate-500 text-base mt-1">請各位同仁於本週五前完成問卷調查...</p>
+                                <div class="text-slate-400 text-sm mt-2">2026-02-12　發布單位：福委會</div>
+                            </article>
+                            <article class="px-5 py-4">
+                                <h3 class="text-3xl font-bold text-slate-900">資訊安全宣導：防範釣魚郵件</h3>
+                                <p class="text-slate-500 text-base mt-1">近期發現多起釣魚郵件攻擊，請勿點擊不明連結...</p>
+                                <div class="text-slate-400 text-sm mt-2">2026-02-10　發布單位：資訊部</div>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section class="dash-panel">
+                        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m9 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                待辦簽核
+                            </h2>
+                            <a href="#" class="text-blue-600 text-sm font-semibold">前往簽核中心 →</a>
+                        </div>
+                        <div class="p-4">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-left">
+                                        <th class="px-4 py-3 rounded-l-lg">單號</th>
+                                        <th class="px-4 py-3">類別</th>
+                                        <th class="px-4 py-3">申請人</th>
+                                        <th class="px-4 py-3">日期</th>
+                                        <th class="px-4 py-3 rounded-r-lg">狀態</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-slate-100">
+                                        <td class="px-4 py-3">PO-202602001</td>
+                                        <td class="px-4 py-3">採購單</td>
+                                        <td class="px-4 py-3">王大明</td>
+                                        <td class="px-4 py-3 text-slate-400">02/12</td>
+                                        <td class="px-4 py-3"><span class="px-3 py-1 rounded-full text-sm bg-amber-100 text-amber-600">待簽核</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3">LE-202602003</td>
+                                        <td class="px-4 py-3">請假單</td>
+                                        <td class="px-4 py-3">李小花</td>
+                                        <td class="px-4 py-3 text-slate-400">02/11</td>
+                                        <td class="px-4 py-3"><span class="px-3 py-1 rounded-full text-sm bg-amber-100 text-amber-600">待簽核</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="xl:col-span-4 space-y-5">
+                    <section class="dash-panel p-5">
+                        <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.414-1.414M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 10-5.656-5.656l-1.414 1.414" /></svg>
+                            常用連結
+                        </h2>
+                        <div class="grid grid-cols-2 gap-3 text-center">
+                            <a href="/mis/programs" class="quick-item p-4 hover:bg-slate-100 transition-colors">
+                                <div class="mx-auto mb-2 w-11 h-11 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="6" ry="3" stroke-width="2"/><path d="M6 5v8c0 1.7 2.7 3 6 3s6-1.3 6-3V5" stroke-width="2"/><path d="M6 9c0 1.7 2.7 3 6 3s6-1.3 6-3" stroke-width="2"/></svg>
+                                </div>
+                                <div class="font-semibold">Oracle MIS</div>
+                            </a>
+                            <a href="#" class="quick-item p-4 hover:bg-slate-100 transition-colors">
+                                <div class="mx-auto mb-2 w-11 h-11 rounded-xl bg-green-100 text-green-600 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 19h16M7 16V8m5 8V5m5 11v-6"/></svg>
+                                </div>
+                                <div class="font-semibold">報表系統</div>
+                            </a>
+                            <a href="#" class="quick-item p-4 hover:bg-slate-100 transition-colors">
+                                <div class="mx-auto mb-2 w-11 h-11 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-width="2"/><path stroke-width="2" d="M12 8v5l3 2"/></svg>
+                                </div>
+                                <div class="font-semibold">考勤查詢</div>
+                            </a>
+                            <a href="#" class="quick-item p-4 hover:bg-slate-100 transition-colors">
+                                <div class="mx-auto mb-2 w-11 h-11 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 8a4 4 0 100 8 4 4 0 000-8z"/><path stroke-width="2" d="M4 12h2m12 0h2M12 4v2m0 12v2M6.3 6.3l1.4 1.4m8.6 8.6l1.4 1.4m0-11.4l-1.4 1.4m-8.6 8.6l-1.4 1.4"/></svg>
+                                </div>
+                                <div class="font-semibold">系統設定</div>
+                            </a>
+                        </div>
+                    </section>
+
+                    <section class="clock-card p-6">
+                        <div class="text-center text-5xl font-bold">@timeText</div>
+                        <div class="text-center mt-2 text-base text-blue-200">@dow</div>
+                        <div class="border-t border-white/20 my-5"></div>
+                        <div class="flex items-center justify-between text-base">
+                            <span class="text-blue-200">台北 (GMT+8)</span>
+                            <span class="text-emerald-400 font-semibold">● 線上</span>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+    <g-js profile="main"></g-js>
+}
+

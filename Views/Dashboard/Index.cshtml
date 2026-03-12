@@ -1,0 +1,336 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金可國際-永勝光學 | 專業隱形眼鏡製造與視覺守護者</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#0F4C81', // 經典藍，代表信賴與專業
+                            teal: '#20B2AA', // 海洋青，代表保濕與健康
+                            light: '#F0F8FF' // 愛麗絲藍，乾淨的背景
+                        }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 8s linear infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 自定義平滑滾動與淡入效果 */
+        html { scroll-behavior: smooth; }
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            visibility: hidden;
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            will-change: opacity, visibility;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: none;
+            visibility: visible;
+        }
+        .hero-bg {
+            background-image: linear-gradient(rgba(15, 76, 129, 0.8), rgba(15, 76, 129, 0.9)), url('https://images.unsplash.com/photo-1576091160550-2173ff9e5eb3?q=80&w=2069&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-800 bg-gray-50 antialiased">
+
+    <nav class="fixed w-full z-50 bg-white/95 backdrop-blur-sm shadow-sm transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex-shrink-0 flex items-center cursor-pointer">
+                    <svg class="h-10 w-10 text-brand-teal animate-spin-slow" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="4" stroke-dasharray="10 20"/>
+                        <circle cx="50" cy="50" r="30" stroke="#0F4C81" stroke-width="6" opacity="0.8"/>
+                        <circle cx="50" cy="50" r="15" fill="#20B2AA" class="animate-pulse"/>
+                    </svg>
+                    <div class="ml-3">
+                        <h1 class="text-xl font-bold text-brand-blue tracking-wider">永勝光學</h1>
+                        <p class="text-xs text-gray-500 tracking-widest">金可國際集團</p>
+                    </div>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#about" class="text-gray-600 hover:text-brand-teal font-medium transition-colors">關於我們</a>
+                    <a href="#tech" class="text-gray-600 hover:text-brand-teal font-medium transition-colors">核心技術</a>
+                    <a href="#quality" class="text-gray-600 hover:text-brand-teal font-medium transition-colors">品質保證</a>
+                    <a href="#contact" class="text-gray-600 hover:text-brand-teal font-medium transition-colors">聯絡資訊</a>
+                </div>
+                <div class="hidden md:flex">
+                    <a href="/Account/Login"
+                       class="inline-flex items-center justify-center min-w-[190px] bg-brand-blue hover:bg-blue-800 text-white px-7 py-2.5 rounded-full font-semibold transition-shadow shadow-md hover:shadow-lg">
+                        企業內部入口網站
+                    </a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button class="text-gray-600 hover:text-brand-blue focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-bg relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center lg:text-left flex flex-col lg:flex-row items-center">
+            <div class="lg:w-1/2 text-white">
+                <div class="inline-block bg-brand-teal/20 border border-brand-teal/50 rounded-full px-4 py-1 mb-6 backdrop-blur-sm">
+                    <span class="text-brand-teal font-bold text-sm tracking-widest">👁️ 亞洲光學領導品牌</span>
+                </div>
+                <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-6">
+                    清晰視界<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-blue-300">守護您的健康雙眸</span>
+                </h2>
+                <p class="text-lg sm:text-xl text-gray-200 mb-10 max-w-2xl mx-auto lg:mx-0 font-light">
+                    永勝光學隸屬金可國際集團，以世界級的尖端高分子生醫技術，結合亞洲人體工學設計，為全球提供安全、舒適、高透氧的隱形眼鏡產品。
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
+                    <button class="bg-brand-teal hover:bg-teal-500 text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-lg shadow-teal-500/30">
+                        探索產品技術
+                    </button>
+                    <button class="bg-white/10 hover:bg-white/20 border border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg transition-all backdrop-blur-sm">
+                        了解企業願景
+                    </button>
+                </div>
+            </div>
+            
+            <div class="lg:w-1/2 mt-16 lg:mt-0 flex justify-center lg:justify-end">
+                <div class="relative w-72 h-72 sm:w-96 sm:h-96">
+                    <svg class="absolute inset-0 w-full h-full text-brand-teal/40 animate-spin-slow" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="currentColor" d="M44.7,-76.4C58.3,-69.2,70,-56.3,78.5,-41.5C87,-26.7,92.3,-10.1,91.3,6.1C90.3,22.3,83.1,38.1,72.3,50.6C61.5,63.1,47.1,72.4,31.4,78.8C15.7,85.2,-1.3,88.7,-17.6,84.9C-33.9,81.1,-49.5,70,-60.8,56.3C-72.1,42.6,-79.1,26.4,-82.1,9.8C-85.1,-6.8,-84.1,-23.8,-76.3,-37.5C-68.5,-51.2,-53.9,-61.6,-39.4,-68.3C-24.9,-75,-12.4,-78,2.7,-81.2C17.8,-84.4,31.1,-83.6,44.7,-76.4Z" transform="translate(100 100) scale(1.1)" />
+                    </svg>
+                    <img src="https://images.unsplash.com/photo-1589828131802-1815db47ff82?q=80&w=1000&auto=format&fit=crop" alt="專業實驗室" class="absolute inset-4 rounded-full object-cover shadow-2xl animate-float border-4 border-white/20">
+                </div>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-0 w-full overflow-hidden leading-none">
+            <svg class="relative block w-full h-[50px] sm:h-[100px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C59.71,118,130.9,122.9,200.7,117.8Z" class="fill-gray-50"></path>
+            </svg>
+        </div>
+    </section>
+
+    <section id="about" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 fade-in-section">
+                <h3 class="text-3xl font-bold text-brand-blue mb-4">深耕台灣，放眼全球的視界守護者</h3>
+                <div class="w-24 h-1 bg-brand-teal mx-auto rounded-full"></div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div class="fade-in-section">
+                    <img src="https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?q=80&w=1000&auto=format&fit=crop" alt="先進製造設備" class="rounded-2xl shadow-xl">
+                </div>
+                <div class="space-y-6 fade-in-section">
+                    <p class="text-lg text-gray-600 leading-relaxed">
+                        【永勝光學】為金可國際集團（Ginko International）旗下重要事業體，總部位於台灣中部科學園區。我們專注於隱形眼鏡及護理液的研發與製造，是亞洲地區最具規模的光學大廠之一。
+                    </p>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-brand-blue">
+                        <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <span class="text-brand-teal mr-2">📌</span> 關鍵事實 (Fact Check)
+                        </h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-2">✔️</span>
+                                <span><strong>知名品牌推手：</strong> 台灣與兩岸熟知的「海昌 (Hydron)」隱形眼鏡，即是集團旗下深具代表性的核心品牌。</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-2">✔️</span>
+                                <span><strong>國際雙認證：</strong> 全廠區符合 ISO 13485 醫療器材品質管理系統及 GMP 優良製造規範。</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-2">✔️</span>
+                                <span><strong>強大產能：</strong> 具備高度自動化生產線，滿足全球市場對日拋、彩拋等高階產品的龐大需求。</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tech" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 fade-in-section">
+                <h3 class="text-3xl font-bold text-brand-blue mb-4">頂尖生醫科技，四大防護承諾</h3>
+                <p class="text-gray-500 max-w-2xl mx-auto">採用領先業界的尖端高分子材料科學，讓每一次佩戴都成為舒適與健康的享受。</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="bg-brand-light p-8 rounded-2xl hover:shadow-xl transition-all duration-300 group fade-in-section text-center hover:-translate-y-2 border border-transparent hover:border-brand-teal/30">
+                    <div class="w-20 h-20 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                        <svg class="w-10 h-10 text-brand-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                    <h4 class="text-xl font-bold text-brand-blue mb-3">💧 雙效保濕因子</h4>
+                    <p class="text-gray-600 text-sm">玻尿酸與海藻糖雙重配方，將水分牢牢鎖在鏡片中，全天候水潤不乾澀。</p>
+                </div>
+
+                <div class="bg-brand-light p-8 rounded-2xl hover:shadow-xl transition-all duration-300 group fade-in-section text-center hover:-translate-y-2 border border-transparent hover:border-brand-teal/30" style="transition-delay: 100ms;">
+                    <div class="w-20 h-20 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                        <svg class="w-10 h-10 text-brand-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <h4 class="text-xl font-bold text-brand-blue mb-3">🛡️ 抗 UV 防護</h4>
+                    <p class="text-gray-600 text-sm">有效阻擋紫外線 UVA 及 UVB，降低陽光對眼球的傷害，如同眼睛的隱形陽傘。</p>
+                </div>
+
+                <div class="bg-brand-light p-8 rounded-2xl hover:shadow-xl transition-all duration-300 group fade-in-section text-center hover:-translate-y-2 border border-transparent hover:border-brand-teal/30" style="transition-delay: 200ms;">
+                    <div class="w-20 h-20 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                        <svg class="w-10 h-10 text-brand-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                    </div>
+                    <h4 class="text-xl font-bold text-brand-blue mb-3">🔬 高透氧材料</h4>
+                    <p class="text-gray-600 text-sm">新一代矽水膠與智能高分子技術，角膜呼吸順暢，長時間配戴依然健康透氣。</p>
+                </div>
+
+                <div class="bg-brand-light p-8 rounded-2xl hover:shadow-xl transition-all duration-300 group fade-in-section text-center hover:-translate-y-2 border border-transparent hover:border-brand-teal/30" style="transition-delay: 300ms;">
+                    <div class="w-20 h-20 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                        <svg class="w-10 h-10 text-brand-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </div>
+                    <h4 class="text-xl font-bold text-brand-blue mb-3">👁️ 3D 仿生邊緣</h4>
+                    <p class="text-gray-600 text-sm">獨家邊緣導角設計，完美貼合亞洲人眼球弧度，眨眼時淚液循環更順暢。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="quality" class="py-20 bg-brand-blue text-white overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row items-center gap-16">
+                <div class="lg:w-1/2 space-y-8 fade-in-section">
+                    <h3 class="text-3xl lg:text-4xl font-bold">從實驗室到眼前的<br><span class="text-brand-teal">無暇堅持</span></h3>
+                    <p class="text-gray-300 text-lg">每一片隱形眼鏡，都經過超過百道精密工序與自動化視覺光學檢測。我們嚴格把關品質，只為讓您看見最真實、最美好的世界。</p>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="border-l-2 border-brand-teal pl-4">
+                            <p class="text-4xl font-black text-brand-teal mb-1">100<span class="text-2xl">%</span></p>
+                            <p class="text-sm text-gray-300">自動化光學檢測</p>
+                        </div>
+                        <div class="border-l-2 border-brand-teal pl-4">
+                            <p class="text-4xl font-black text-brand-teal mb-1">50<span class="text-2xl">+</span></p>
+                            <p class="text-sm text-gray-300">產品外銷國家</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lg:w-1/2 w-full grid grid-cols-2 gap-4 fade-in-section">
+                    <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=800&auto=format&fit=crop" alt="醫學檢驗室" class="rounded-lg shadow-lg object-cover h-48 w-full hover:scale-105 transition-transform duration-500">
+                    <img src="https://images.unsplash.com/photo-1433162653888-a571f33656ce?q=80&w=800&auto=format&fit=crop" alt="清晰視界女孩" class="rounded-lg shadow-lg object-cover h-48 w-full mt-8 hover:scale-105 transition-transform duration-500">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contact" class="bg-gray-900 text-gray-300 py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h5 class="text-white text-lg font-bold mb-4 flex items-center">
+                        <svg class="h-6 w-6 text-brand-teal mr-2" viewBox="0 0 100 100" fill="none">
+                            <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="8"/>
+                            <circle cx="50" cy="50" r="15" fill="currentColor"/>
+                        </svg>
+                        永勝光學股份有限公司
+                    </h5>
+                    <p class="text-sm text-gray-400">隸屬金可國際集團，致力於用生醫科技點亮您的清晰視界。</p>
+                </div>
+                <div>
+                    <h5 class="text-white text-lg font-bold mb-4">聯絡資訊</h5>
+                    <ul class="text-sm space-y-2">
+                        <li>🏢 台灣中部科學園區 (台中市大雅區)</li>
+                        <li>📞 客服專線：0800-XXX-XXX</li>
+                        <li>✉️ 信箱：service@yungsheng.com.tw</li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="text-white text-lg font-bold mb-4">法規聲明</h5>
+                    <p class="text-xs text-gray-500 leading-relaxed">
+                        配戴一般隱形眼鏡須經眼科醫師驗光配鏡取得處方箋，或經驗光人員驗光配鏡取得配鏡單，並定期接受眼科醫師追蹤檢查。<br>
+                        本器材不得逾中文仿單建議之最長配戴時數、不得重覆配戴，於就寢前務必取下，以免感染或潰瘍。<br>
+                        如有不適，應立即就醫。
+                    </p>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
+                &copy; 2026 永勝光學股份有限公司 (Ginko International). All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 導覽列滾動效果
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-md');
+                navbar.classList.remove('shadow-sm');
+            } else {
+                navbar.classList.add('shadow-sm');
+                navbar.classList.remove('shadow-md');
+            }
+        });
+
+        // 元素進入視角時的淡入動畫 (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target); // 播放一次後取消觀察
+                    }
+                });
+            }, observerOptions);
+
+            const fadeElements = document.querySelectorAll('.fade-in-section');
+            fadeElements.forEach(el => {
+                observer.observe(el);
+            });
+        });
+    </script>
+</body>
+</html>
+

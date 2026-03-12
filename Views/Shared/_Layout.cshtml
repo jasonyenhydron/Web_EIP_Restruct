@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - Oracle DBA System</title>
+    <script>
+        const originalWarn = console.warn;
+        console.warn = function() {
+            if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].includes('cdn.tailwindcss.com should not be used in production')) return;
+            originalWarn.apply(console, arguments);
+        };
+    </script>
+    <script>
+        (function () {
+            try {
+                var key = "eip.theme";
+                var saved = localStorage.getItem(key) || "blue-white";
+                document.documentElement.setAttribute("data-theme", saved);
+            } catch (e) {
+                document.documentElement.setAttribute("data-theme", "blue-white");
+            }
+        })();
+    </script>
+    <g-js profile="main"
+          include-tailwind="true"
+          include-htmx="true"
+          htmx-version="1.9.12"
+          include-alpine="true"
+          include-theme="true"
+          alpine-version="3.x.x"></g-js>
+    <g-style profile="layout"></g-style>
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <partial name="~/Views/Shared/_IconSprite.cshtml" />
+
+    @RenderBody()
+
+    <g-messager/>
+    <g-error-message />
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
+

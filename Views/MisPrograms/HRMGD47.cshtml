@@ -1,0 +1,413 @@
+﻿@{
+    var _viewName = System.IO.Path.GetFileNameWithoutExtension(ViewContext.ExecutingFilePath);
+    ViewData["Title"] = ViewBag.ProgramTitle ?? _viewName;
+    ViewData["ShowPopupTitleBar"] = false;
+    Layout = "~/Views/Shared/_PopupLayout.cshtml";
+    var leaveTypeLovApi = (ViewBag.LeaveTypeLovApi?.ToString() ?? "/api/lov/hrm/leave-types");
+    var employeeLovApi = (ViewBag.EmployeeLovApi?.ToString() ?? "/api/lov/hrm/employees");
+    var bookingDeptLovApi = (ViewBag.BookingDeptLovApi?.ToString() ?? "/api/lov/hrm/booking-departments");
+}
+
+<div class="min-h-full p-0">
+    <div class="w-full space-y-5">
+
+        <g-tabs active-tab="0">
+
+            <g-tab title="請假申請" icon="edit">
+                <div class="space-y-4">
+                    <div class="flex justify-end">
+                        <g-status-badge code="00" label="鍵入中" color="amber"></g-status-badge>
+                    </div>
+
+                    <g-dataform id="hrmgd47LeaveForm"
+                                title="請假表單資料"
+                                api="/api/internal/form/HRMGD47"
+                                query-api="/api/internal/grid/HRMGD47"
+                                query-title="查詢條件（過濾部門）"
+                                horizontal-columns-count="6"
+                                validate-style="dialog"
+                                duplicate-check="true"
+                                extra-class="overflow-hidden"
+                                status-target-id="statusBarMsg"
+                                saving-message="資料庫寫入中..."
+                                validate-failed-message="錯誤：欄位驗證未通過。"
+                                save-success-message="Success: {message} (流水號: {id})"
+                                save-error-message="Error: {message}"
+                                success-toast-message="申請單建立成功！單號：{id}"
+                                error-toast-message="申請失敗：{message}"
+                                exception-toast-message="系統發生錯誤，無法連線。"
+                                empty-string-as-null="true"
+                                on-load-success="hrmgd47OnLeaveFormLoaded"
+                                on-query-loaded="hrmgd47OnLeaveFormQueried"
+                                on-applied="hrmgd47OnLeaveFormApplied"
+                                tool-items='[{"action":"add","label":"新增申請"},{"action":"edit","label":"修改申請","requireSelection":true},{"action":"delete","label":"刪除申請","requireSelection":true}]'>
+                        <query-column field-name="ruleDisplay"
+                                      caption="規章"
+                                      editor="g-readonly"
+                                      default-value="TW01 台灣人事規章"
+                                      span="3">
+                        </query-column>
+                        <query-column field-name="employeeQueryId"
+                                      query-field="employeeId"
+                                      caption="員工編號名稱"
+                                      editor="g-lov-input"
+                                      lov-title="尋找員工 (Employee)"
+                                      lov-api="@employeeLovApi"
+                                      lov-columns="編號,名稱,ID"
+                                      lov-fields="employee_no,employee_name,employee_id"
+                                      lov-key-value="employee_id"
+                                      lov-key-display="employeeQueryDisplay"
+                                      lov-display-format="{employee_no} - {employee_name}"
+                                      span="3">
+                        </query-column>
+                        <query-column field-name="deptNo"
+                                      query-field="deptNo"
+                                      caption="部門編號 / 名稱"
+                                      editor="g-lov-input"
+                                      lov-title="尋找預約部門"
+                                      lov-api="@bookingDeptLovApi"
+                                      lov-columns="部門ID,部門編號,部門名稱"
+                                      lov-fields="department_id,department_no,department_name"
+                                      lov-key-value="department_no"
+                                      lov-key-display="deptName"
+                                      lov-display-format="{department_no} - {department_name}"
+                                      span="4">
+                        </query-column>
+                        <query-column field-name="qDateFrom"
+                                      query-field="startDate"
+                                      caption="查詢開始日期"
+                                      editor="g-datebox"
+                                      span="2">
+                        </query-column>
+                        <query-column field-name="qDateTo"
+                                      query-field="endDate"
+                                      caption="查詢結束日期"
+                                      editor="g-datebox"
+                                      span="2">
+                        </query-column>
+                        <query-column field-name="includeApproved"
+                                      query-field="includeApproved"
+                                      caption="含已簽核資料"
+                                      editor="g-checkbox"
+                                      default-value="N"
+                                      span="2">
+                        </query-column>
+                        <query-column field-name="includeChildren"
+                                      query-field="includeChildren"
+                                      caption="含子部門"
+                                      editor="g-checkbox"
+                                      default-value="N"
+                                      span="2">
+                        </query-column>
+
+                        <form-column field-name="emAskForLeaveId"
+                                     caption="單號 ID"
+                                     column-type="g-readonly"
+                                     is-primary-key="true"
+                                     value-type="long"
+                                     col-span="1">
+                        </form-column>
+
+                        <form-column field-name="employeeId"
+                                     caption="申請員工"
+                                     column-type="g-lov-input"
+                                     default-value="@ViewBag.NumericUserId"
+                                     lov-title="尋找員工 (Employee)"
+                                     lov-api="@employeeLovApi"
+                                     lov-columns="編號,名稱,ID"
+                                     lov-fields="employee_no,employee_name,employee_id"
+                                     lov-key-value="employee_id"
+                                     lov-key-display="employeeDisplay"
+                                     lov-display-format="{employee_no} - {employee_name}"
+                                     value-type="long"
+                                     col-span="3">
+                        </form-column>
+                        <form-column field-name="employeeDisplay"
+                                     column-type="g-hidden"
+                                     default-value="@($"{ViewBag.UserId} - {ViewBag.UserName}")">
+                        </form-column>
+
+                        <form-column field-name="leaveId"
+                                     caption="假別"
+                                     column-type="g-lov-input"
+                                     lov-title="尋找假別 (Leave Type)"
+                                     lov-api="@leaveTypeLovApi"
+                                     lov-columns="假別編號,假別名稱"
+                                     lov-fields="leave_id,leave_name"
+                                     lov-key-value="leave_id"
+                                     lov-key-display="leaveTypeDisplay"
+                                     lov-display-format="{leave_id} - {leave_name}"
+                                     value-type="long"
+                                     col-span="2">
+                        </form-column>
+                        <form-column field-name="leaveTypeDisplay" column-type="g-hidden"></form-column>
+
+                        <form-column field-name="startTime"
+                                     caption="請假開始時間"
+                                     column-type="g-datetimebox"
+                                     col-span="3">
+                        </form-column>
+                        <form-column field-name="endTime"
+                                     caption="請假結束時間"
+                                     column-type="g-datetimebox"
+                                     compare-field="startTime"
+                                     compare-mode="after-field"
+                                     validate-message="結束時間必須大於開始時間"
+                                     col-span="3">
+                        </form-column>
+
+                        <form-column field-name="leaveHours"
+                                     caption="時數"
+                                     column-type="g-numberbox"
+                                     min="0"
+                                     validate-message="時數必須大於等於 0"
+                                     value-type="decimal"
+                                     col-span="1">
+                        </form-column>
+                        <form-column field-name="leaveDays"
+                                     caption="日數"
+                                     column-type="g-readonly"
+                                     value-type="decimal"
+                                     col-span="1">
+                        </form-column>
+                        <form-column field-name="punchDate"
+                                     caption="刷卡日"
+                                     column-type="g-datebox"
+                                     col-span="2">
+                        </form-column>
+                        <form-column field-name="agentEmployeeId"
+                                     caption="代理人員工"
+                                     column-type="g-lov-input"
+                                     lov-title="尋找員工 (Employee)"
+                                     lov-api="@employeeLovApi"
+                                     lov-columns="編號,名稱,ID"
+                                     lov-fields="employee_no,employee_name,employee_id"
+                                     lov-key-value="employee_id"
+                                     lov-key-display="agentEmployeeDisplay"
+                                     lov-display-format="{employee_no} - {employee_name}"
+                                     value-type="long"
+                                     col-span="2">
+                        </form-column>
+                        <form-column field-name="agentEmployeeDisplay" column-type="g-hidden"></form-column>
+
+                        <form-column field-name="askForLeaveReason"
+                                     caption="事由"
+                                     column-type="g-textarea"
+                                     col-span="6">
+                        </form-column>
+
+                        <form-column field-name="destinationPlace"
+                                     caption="公出地點"
+                                     column-type="g-textbox"
+                                     col-span="2">
+                        </form-column>
+                        <form-column field-name="talkingAbout"
+                                     caption="接洽對象"
+                                     column-type="g-textbox"
+                                     col-span="2">
+                        </form-column>
+                        <form-column field-name="returnYn"
+                                     caption="返回工作地點"
+                                     column-type="g-radiogroup"
+                                     options="Y:返回工作地點,N:不返回工作地點"
+                                     default-value="N"
+                                     col-span="2">
+                        </form-column>
+
+                        <form-column field-name="overseasYn"
+                                     caption="海外出差"
+                                     column-type="g-radiogroup"
+                                     options="Y:是,N:否"
+                                     default-value="N"
+                                     col-span="2">
+                        </form-column>
+
+                        <form-column field-name="yearTotal"
+                                     caption="年度可休時數"
+                                     column-type="g-readonly"
+                                     col-span="1">
+                        </form-column>
+                        <form-column field-name="yearUsed"
+                                     caption="年度已休時數(不含本次)"
+                                     column-type="g-readonly"
+                                     col-span="1">
+                        </form-column>
+                        <form-column field-name="periodTotal"
+                                     caption="本期可休時數"
+                                     column-type="g-readonly"
+                                     col-span="1">
+                        </form-column>
+                        <form-column field-name="periodUsed"
+                                     caption="本期已休時數(不含本次)"
+                                     column-type="g-readonly"
+                                     col-span="1">
+                        </form-column>
+
+                        <form-column field-name="emAskForLeaveStatus"
+                                     column-type="g-hidden"
+                                     default-value="00">
+                        </form-column>
+                        <form-column field-name="flowYn"
+                                     column-type="g-hidden"
+                                     default-value="N">
+                        </form-column>
+                    </g-dataform>
+                </div>
+            </g-tab>
+
+            <g-tab title="附件檔案" icon="upload">
+                <g-panel title="附件上傳" icon="upload">
+                    <p class="text-xs text-red-500 mb-3 font-medium">使用說明：選檔 -> Upload -> 閱讀</p>
+                    <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-100">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500 w-8">序</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">附件上傳</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">檔案說明</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500 text-center w-32">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white">
+                                @for (int fi = 1; fi <= 3; fi++)
+                                {
+                                    <tr>
+                                        <td class="px-3 py-2 text-xs text-slate-500">@fi</td>
+                                        <td class="px-3 py-2 text-sm text-slate-600">
+                                            <g-file-uploader id="hrmAttachUploader_@fi"
+                                                             label=""
+                                                             name="files"
+                                                             upload-url="/api/files/upload"
+                                                             upload-mode="useButtons"
+                                                             folder="hrmgd47"
+                                                             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                                             allowed-file-extensions=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                                             multiple="false"
+                                                             max-file-size="10485760"
+                                                             select-button-text="選擇檔案"
+                                                             upload-button-text="Upload"
+                                                             cancel-button-text="Clear"
+                                                             drop-zone-text="或拖拉檔案到此"
+                                                             result-input-id="attachPath_@fi"
+                                                             toast-on-uploaded="true">
+                                            </g-file-uploader>
+                                            <input type="hidden" id="attachPath_@fi" name="attachPath_@fi" value="">
+                                        </td>
+                                        <td class="px-3 py-2 text-sm text-slate-600">
+                                            <input type="text" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 block w-full text-xs" placeholder="說明...">
+                                        </td>
+                                        <td class="px-3 py-2 text-sm text-slate-600 text-center space-x-1">
+                                            <g-button text="閱讀" icon="eye" type="info" size="sm" onclick="gFileUploader.openResult('attachPath_@fi')"></g-button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </g-panel>
+            </g-tab>
+
+            <g-tab title="簽核歷程" icon="check">
+                <g-panel title="簽核明細記錄" icon="check">
+                    <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-100">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">處理者</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">行動</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500 text-center">結果</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">意義</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">簽核意見</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">完成時間</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white">
+                                <tr>
+                                    <td class="px-3 py-2 text-sm text-slate-600 text-slate-700 font-medium">@ViewBag.UserName</td>
+                                    <td class="px-3 py-2 text-sm text-slate-600">申請送出</td>
+                                    <td class="px-3 py-2 text-sm text-slate-600 text-center"><span class="bg-slate-100 text-slate-600 inline-block px-2 py-0.5 rounded-full text-xs font-mono">00</span></td>
+                                    <td class="px-3 py-2 text-sm text-slate-600">鍵入中</td>
+                                    <td class="px-3 py-2 text-sm text-slate-600 text-xs text-slate-500 italic">表單建立</td>
+                                    <td class="px-3 py-2 text-sm text-slate-600 text-xs text-slate-500">@DateTime.Now.ToString("yyyy-MM-dd HH:mm")</td>
+                                </tr>
+                                <tr><td colspan="6" class="py-4"></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </g-panel>
+            </g-tab>
+
+            <g-tab title="年度特休" icon="calendar">
+                <g-panel title="特休資料查詢" icon="calendar">
+                    <div class="flex justify-end mb-3">
+                        <g-button text="查詢年度特休" icon="search" type="secondary" size="sm"></g-button>
+                    </div>
+                    <div class="overflow-hidden rounded-lg border border-slate-200">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-100 text-purple-800">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">開始日期</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">結束日期</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500 text-right">可休時數</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500 text-right">實際可休</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500 text-right">已休時數</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white">
+                                <tr class="text-slate-600">
+                                    <td class="px-3 py-2 text-sm text-slate-600">2026-01-01</td>
+                                    <td class="px-3 py-2 text-sm text-slate-600">2026-12-31</td>
+                                    <td class="px-3 py-2 text-sm text-slate-600 text-right font-mono bg-slate-100">120.0</td>
+                                    <td class="px-3 py-2 text-sm text-slate-600 text-right font-mono bg-slate-100">120.0</td>
+                                    <td class="px-3 py-2 text-sm text-slate-600 text-right font-mono text-pink-600 bg-slate-100">32.5</td>
+                                </tr>
+                                <tr><td colspan="5" class="py-4"></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </g-panel>
+            </g-tab>
+
+        </g-tabs>
+
+        <g-status-bar msg-id="statusBarMsg" record-info="1/1" default-msg="Ready."></g-status-bar>
+
+    </div>
+</div>
+
+@section Scripts {
+    <g-js profile="popup"></g-js>
+    <script>
+        function hrmgd47SetStatus(message) {
+            const statusBarMsg = document.getElementById('statusBarMsg');
+            if (statusBarMsg) statusBarMsg.value = message || '';
+        }
+
+        function hrmgd47OnLeaveFormLoaded(formData) {
+            if (formData?.employeeNo && formData?.employeeName && !formData?.employeeDisplay) {
+                formData.employeeDisplay = `${formData.employeeNo} - ${formData.employeeName}`;
+            }
+
+            hrmgd47SetStatus(formData?.emAskForLeaveId
+                ? `已載入請假單 ${formData.emAskForLeaveId}`
+                : '請使用「新增申請」開始建立請假單。');
+        }
+
+        function hrmgd47OnLeaveFormApplied(formData) {
+            const docId = formData?.emAskForLeaveId || '未取得';
+            hrmgd47SetStatus(`請假單已儲存，單號：${docId}`);
+        }
+
+        function hrmgd47OnLeaveFormQueried(payload) {
+            const rows = payload?.rows || [];
+            if (!rows.length) {
+                hrmgd47SetStatus('查無符合條件的請假資料。');
+                return;
+            }
+
+            const row = payload.row || rows[0];
+            hrmgd47SetStatus(`查詢完成，共 ${rows.length} 筆，本次載入單號：${row?.emAskForLeaveId || '未取得'}`);
+        }
+    </script>
+}
+

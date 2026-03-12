@@ -1,0 +1,53 @@
+﻿@{
+    ViewData["Title"] = "SigonCenter";
+    ViewBag.HeaderTitle = "SigonCenter";
+}
+
+<div class="flex h-screen bg-slate-100 overflow-hidden">
+    <partial name="Components/_Sidebar" />
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <partial name="Components/_Header" />
+
+        <main class="flex-1 overflow-auto p-6">
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                <h1 class="text-2xl font-bold text-slate-800 mb-2">簽核中心</h1>
+                <p class="text-slate-500">這裡顯示待簽核與歷史簽核資料。</p>
+            </div>
+
+            <div class="mt-6 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-5 py-3 border-b border-slate-100 font-semibold text-slate-700">待簽核清單</div>
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-500">
+                        <tr>
+                            <th class="px-5 py-2">單號</th>
+                            <th class="px-5 py-2">類型</th>
+                            <th class="px-5 py-2">申請人</th>
+                            <th class="px-5 py-2">日期</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        <tr>
+                            <td class="px-5 py-3">PO-202603001</td>
+                            <td class="px-5 py-3">採購申請</td>
+                            <td class="px-5 py-3">Jason</td>
+                            <td class="px-5 py-3">2026-03-03</td>
+                        </tr>
+                        <tr>
+                            <td class="px-5 py-3">LE-202603004</td>
+                            <td class="px-5 py-3">請假申請</td>
+                            <td class="px-5 py-3">Amy</td>
+                            <td class="px-5 py-3">2026-03-02</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+    <g-js profile="main"></g-js>
+}
+
+

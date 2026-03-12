@@ -1,0 +1,148 @@
+﻿@model Web_EIP_Restruct.Models.FileBrowserViewModel
+
+@{
+    ViewData["Title"] = "文件查詢";
+    ViewBag.HeaderTitle = "文件查詢";
+}
+
+<div class="flex h-screen bg-slate-100 overflow-hidden">
+    <partial name="Components/_Sidebar" />
+
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <partial name="Components/_Header" />
+
+        <main class="flex-1 overflow-auto p-6">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-200 bg-slate-100">
+                    <div class="text-sm text-slate-500">根目錄: @Model.RootDisplay</div>
+                    <div class="text-base font-semibold text-slate-700 mt-1">
+                        當前路徑: @(string.IsNullOrEmpty(Model.CurrentRelativePath) ? "/" : "/" + Model.CurrentRelativePath)
+                    </div>
+                    <div class="text-xs text-slate-500 mt-1">
+                        查詢結果: @Model.Entries.Count 筆 @(!string.IsNullOrWhiteSpace(Model.SearchQuery) ? $"（關鍵字：{Model.SearchQuery}）" : "")
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage) || TempData["FilesAuthError"] != null)
+                {
+                    <div class="p-5 text-red-700 bg-slate-100 border-b border-red-100">@(TempData["FilesAuthError"] ?? Model.ErrorMessage)</div>
+                }
+
+                @if (Model.RequiresWindowsAuth && !Model.IsWindowsAuthPassed)
+                {
+                    <div class="p-5 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-700 mb-3">Windows 驗證（Key 帳號密碼）</h3>
+                        <form asp-controller="Files" asp-action="Authenticate" method="post" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="path" value="@Model.RequestedPath" />
+                            <input type="hidden" name="q" value="@Model.SearchQuery" />
+                            <input type="text" name="domain" placeholder="網域（選填）" class="px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                            <input type="text" name="username" value="@Model.AuthUserName" placeholder="帳號" class="px-3 py-2 border border-slate-300 rounded-lg text-sm" required />
+                            <input type="password" name="password" placeholder="密碼" class="px-3 py-2 border border-slate-300 rounded-lg text-sm" required />
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm bg-blue-600">驗證並進入</button>
+                        </form>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-4 flex items-center gap-3 border-b border-slate-100">
+                        @if (Model.ParentRelativePath != null)
+                        {
+                            <a asp-controller="Files" asp-action="Index" asp-route-path="@Model.ParentRelativePath" asp-route-q="@Model.SearchQuery"
+                               class="px-3 py-1.5 rounded-md border border-slate-300 text-slate-700 bg-slate-100 text-sm">
+                                返回上層
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="px-3 py-1.5 rounded-md border border-slate-200 text-slate-400 text-sm">已在根目錄</span>
+                        }
+
+                        <form asp-controller="Files" asp-action="Index" method="get" class="flex items-center gap-2 ml-auto">
+                            <input type="hidden" name="path" value="@Model.CurrentRelativePath" />
+                            <input type="text" name="q" value="@Model.SearchQuery" placeholder="搜尋檔名或資料夾..."
+                                   class="w-56 px-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <button type="submit" class="px-3 py-1.5 rounded-md bg-blue-600 text-white bg-blue-600 text-sm">搜尋</button>
+                            @if (!string.IsNullOrWhiteSpace(Model.SearchQuery))
+                            {
+                                <a asp-controller="Files" asp-action="Index" asp-route-path="@Model.CurrentRelativePath"
+                                   class="px-3 py-1.5 rounded-md border border-slate-300 text-slate-700 bg-slate-100 text-sm">清除</a>
+                            }
+                        </form>
+
+                        @if (Model.RequiresWindowsAuth)
+                        {
+                            <form asp-controller="Files" asp-action="ClearAuth" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="px-3 py-1.5 rounded-md border border-slate-300 text-slate-700 bg-slate-100 text-sm">
+                                    重新驗證
+                                </button>
+                            </form>
+                        }
+                    </div>
+
+                    <div class="overflow-auto">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-slate-100 text-slate-500">
+                                <tr>
+                                    <th class="px-4 py-2.5 text-left">名稱</th>
+                                    <th class="px-4 py-2.5 text-left">類型</th>
+                                    <th class="px-4 py-2.5 text-right">大小</th>
+                                    <th class="px-4 py-2.5 text-left">最後修改</th>
+                                    <th class="px-4 py-2.5 text-left">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @if (Model.Entries.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-8 text-center text-slate-400">
+                                            @(string.IsNullOrWhiteSpace(Model.SearchQuery) ? "此資料夾沒有檔案" : $"找不到符合「{Model.SearchQuery}」的資料")
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var item in Model.Entries)
+                                    {
+                                        <tr class="bg-slate-100">
+                                            <td class="px-4 py-2.5">
+                                                @if (item.IsDirectory)
+                                                {
+                                                    <a asp-controller="Files" asp-action="Index" asp-route-path="@item.RelativePath" asp-route-q="@Model.SearchQuery"
+                                                       class="text-blue-700 hover:underline font-medium">📁 @item.Name</a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-slate-700">📄 @item.Name</span>
+                                                }
+                                            </td>
+                                            <td class="px-4 py-2.5 text-slate-500">@(item.IsDirectory ? "資料夾" : "檔案")</td>
+                                            <td class="px-4 py-2.5 text-right text-slate-500">@(item.SizeBytes.HasValue ? string.Format("{0:N0}", item.SizeBytes.Value) : "-")</td>
+                                            <td class="px-4 py-2.5 text-slate-500">@item.ModifiedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td class="px-4 py-2.5">
+                                                @if (!item.IsDirectory)
+                                                {
+                                                    <a asp-controller="Files" asp-action="Open" asp-route-path="@item.RelativePath" asp-route-q="@Model.SearchQuery"
+                                                       target="_blank" class="text-blue-600 hover:underline mr-3">開啟</a>
+                                                    <a asp-controller="Files" asp-action="Download" asp-route-path="@item.RelativePath" asp-route-q="@Model.SearchQuery"
+                                                       class="text-slate-600 hover:underline">下載</a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+    <g-js profile="main"></g-js>
+}
+
+

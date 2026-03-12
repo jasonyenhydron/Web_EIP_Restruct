@@ -1,0 +1,65 @@
+﻿<aside class="dx-sidebar w-64 min-h-screen flex flex-col transition-all duration-300 overflow-hidden" id="sidebar">
+    <div class="h-16 flex items-center px-4 border-b border-slate-200 bg-white">
+        <button class="sidebar-toggle-btn inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors mr-2" type="button">
+            <div class="w-6 h-6 flex flex-col justify-center items-center gap-[6px]">
+                <span class="hamburger-line text-slate-500"></span>
+                <span class="hamburger-line text-slate-500"></span>
+                <span class="hamburger-line text-slate-500"></span>
+            </div>
+        </button>
+        <a href="/Dashboard" class="text-xl font-semibold tracking-wide sidebar-logo truncate text-slate-700">金可集團 EIP</a>
+    </div>
+
+    <nav class="flex-1 py-3 space-y-1 overflow-y-auto bg-slate-50">
+        <a href="/Dashboard/Dashboard" class="dx-side-link flex items-center px-6 py-3 no-underline">
+            <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            <span class="sidebar-text whitespace-nowrap">儀表板</span>
+        </a>
+
+        <a href="/Dashboard/Board" class="dx-side-link flex items-center px-6 py-3 no-underline">
+            <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+            <span class="sidebar-text whitespace-nowrap">公告系統</span>
+        </a>
+
+        <a href="/Dashboard/SigonCenter" class="dx-side-link flex items-center px-6 py-3 no-underline">
+            <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="sidebar-text whitespace-nowrap">簽核中心</span>
+        </a>
+
+        <a href="/Files" class="dx-side-link flex items-center px-6 py-3 no-underline">
+            <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span class="sidebar-text whitespace-nowrap">文件查詢</span>
+        </a>
+
+        <div class="border-t border-slate-200 my-3 mx-4"></div>
+
+        <div>
+            <button onclick="toggleMisMenu()" class="dx-side-link w-full flex items-center justify-between px-6 py-3 no-underline" type="button">
+                <div class="flex items-center truncate">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    <span class="sidebar-text whitespace-nowrap">MIS 系統</span>
+                </div>
+                <svg id="mis-arrow" class="w-4 h-4 transition-transform duration-200 sidebar-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+
+            <div id="mis-submenu" class="hidden bg-slate-100 border-y border-slate-200">
+                <a href="/mis/programs" class="dx-side-sublink flex items-center px-6 py-3 pl-14 no-underline">
+                    <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="sidebar-text whitespace-nowrap">程式項目</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="border-t border-slate-200 my-3 mx-4"></div>
+
+        <a href="/Dashboard/Settings" class="dx-side-link flex items-center px-6 py-3 no-underline">
+            <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span class="sidebar-text whitespace-nowrap">個人設定</span>
+        </a>
+    </nav>
+
+    <div class="p-4 text-xs text-slate-500 text-center border-t border-slate-200 sidebar-footer-text bg-white">
+        &copy; 2026 Ginko Group
+    </div>
+</aside>
+
