@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Web_EIP_Restruct")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+773da211ac6b69a05359d975081616f36d73ff3c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+de638ddaf1239ee93a76440cb418c7649b55d890")]
 [assembly: System.Reflection.AssemblyProductAttribute("Web_EIP_Restruct")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Web_EIP_Restruct")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
