@@ -215,12 +215,14 @@ function clearMisProgramsFilters() {
     const employeeId = document.getElementById('employee_id');
     const employeeCode = document.getElementById('employee_id_code');
     const employeeName = document.getElementById('employee_id_name');
+    const employeeDisplay = document.getElementById('employee_id_name_display') || document.getElementById('employee_id_code_display');
     const displayCode = document.getElementById('display_code');
 
     if (programNo) programNo.value = '';
     if (employeeId) employeeId.value = '';
     if (employeeCode) employeeCode.value = '';
     if (employeeName) employeeName.value = '';
+    if (employeeDisplay) employeeDisplay.value = '';
     if (displayCode) displayCode.value = 'Y';
 
     fetchMisPrograms({ program_no: '', employee_id: '', display_code: 'Y' });

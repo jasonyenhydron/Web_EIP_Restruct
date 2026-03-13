@@ -178,7 +178,7 @@ namespace Web_EIP_Restruct.Views.Components
                  + $" value=\"{HtmlEncode(displayValue)}\""
                  + $" placeholder=\"{HtmlEncode(placeholder)}\""
                  + readonlyAttr + onKeydown + onClickAttr
-                 + " class=\"block min-w-0 flex-1 px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm"
+                 + " class=\"block min-w-0 w-full flex-1 h-[42px] px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm"
                  + " text-slate-700 bg-white placeholder:text-slate-400"
                  + (Readonly || SelectOnly ? " cursor-pointer" : " cursor-text")
                  + " focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors\">";
@@ -192,7 +192,7 @@ namespace Web_EIP_Restruct.Views.Components
             var onclick = string.IsNullOrEmpty(openCmd) ? string.Empty : $" onclick=\"{HtmlAttr(openCmd)}\"";
 
             return $"<button type=\"button\" data-lov-open-btn=\"1\"{onclick}"
-                 + " class=\"shrink-0 inline-flex items-center justify-center px-3 border border-slate-300 rounded-r-xl"
+                 + " class=\"shrink-0 inline-flex items-center justify-center h-[42px] min-w-[42px] px-3 border border-l-0 border-slate-300 rounded-r-xl"
                  + " bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors\">"
                  + "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">"
                  + "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\""

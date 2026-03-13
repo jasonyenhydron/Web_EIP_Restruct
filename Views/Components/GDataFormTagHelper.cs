@@ -68,6 +68,18 @@ namespace Web_EIP_Restruct.Views.Components
         [HtmlAttributeName("tool-items")]
         public string ToolItems { get; set; } = "";
 
+        [HtmlAttributeName("toolbar-compact")]
+        public bool ToolbarCompact { get; set; } = true;
+
+        [HtmlAttributeName("toolbar-nav-command-visible")]
+        public bool ToolbarNavCommandVisible { get; set; } = true;
+
+        [HtmlAttributeName("toolbar-edit-command-visible")]
+        public bool ToolbarEditCommandVisible { get; set; } = true;
+
+        [HtmlAttributeName("toolbar-delete-command-visible")]
+        public bool ToolbarDeleteCommandVisible { get; set; } = true;
+
         [HtmlAttributeName("query-api")]
         public string QueryApi { get; set; } = "";
 
@@ -310,43 +322,96 @@ namespace Web_EIP_Restruct.Views.Components
             var onConfirm = $"function(selected){{const root=document.getElementById('{HtmlAttr(formId)}');if(!root||!root._x_dataStack)return;const data=Alpine.$data(root);if(data){{data.queryValues['{field}']=selected['{keyVal}']??'';data.queryValues['{displayFieldJs}']={(string.IsNullOrWhiteSpace(fmt) ? $"(selected['{keyDisp}']??'')" : BuildLovDisplayExpression(fmt, "selected"))};}}}}";
             var openJs = $"gLov.open({{title:'{title}',api:'{api}',columns:['{cols}'.split(',')].flat(),fields:['{fields}'.split(',')].flat(),map:{{'{keyVal}':'{HtmlAttr(inputId)}_hidden',{displayMap}}},formatDisplay:{(string.IsNullOrWhiteSpace(fmt) ? "null" : $"function(d){{return {BuildLovDisplayExpression(fmt, "d")};}}")},onConfirm:{onConfirm}}})";
 
-            return "<div class=\"flex items-center\">"
+            return "<div class=\"flex items-center w-full\">"
                  + $"<input type=\"hidden\" id=\"{inputId}_hidden\" x-model=\"queryValues['{field}']\"{queryAttr}>"
-                 + $"<input type=\"text\" id=\"{inputId}\" x-model=\"queryValues['{displayFieldJs}']\" readonly placeholder=\"{HtmlEnc(col.Placeholder.Coalesce("請選擇資料"))}\" class=\"block min-w-0 flex-1 px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm text-slate-700 bg-white placeholder:text-slate-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors\">"
-                 + $"<button type=\"button\" onclick=\"{HtmlAttr(openJs)}\" class=\"shrink-0 inline-flex items-center justify-center px-3 border border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors\">"
+                 + $"<input type=\"text\" id=\"{inputId}\" x-model=\"queryValues['{displayFieldJs}']\" readonly placeholder=\"{HtmlEnc(col.Placeholder.Coalesce("請選擇資料"))}\" class=\"block min-w-0 w-full flex-1 h-[42px] px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm text-slate-700 bg-white placeholder:text-slate-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors\">"
+                 + $"<button type=\"button\" onclick=\"{HtmlAttr(openJs)}\" class=\"shrink-0 inline-flex items-center justify-center h-[42px] min-w-[42px] px-3 border border-l-0 border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors\">"
                  + "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\"/></svg></button></div>";
         }
 
         private string BuildToolbar(string formId)
         {
             if (AlwaysReadOnly) return string.Empty;
-
-            var defaultTools = string.IsNullOrWhiteSpace(ToolItems)
-                ? "[{\"action\":\"add\",\"label\":\"新增\"},{\"action\":\"edit\",\"label\":\"修改\",\"requireSelection\":true},{\"action\":\"delete\",\"label\":\"刪除\",\"requireSelection\":true}]"
-                : ToolItems;
-
             var sb = new StringBuilder();
-            sb.Append("<div class=\"flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-slate-50 rounded-t-xl\">");
+            sb.Append("<div class=\"flex items-center justify-between gap-3 px-4 py-2.5 border-b border-slate-200 bg-slate-100 shrink-0 flex-wrap\">");
 
             if (!string.IsNullOrWhiteSpace(Title))
                 sb.Append($"<span class=\"text-sm font-bold text-slate-700\">{HtmlEnc(Title)}</span>");
             else
                 sb.Append("<span></span>");
 
-            sb.Append("<div class=\"flex gap-2\" x-data=\"{}\">");
-            sb.Append($"<template x-for=\"tool in {HtmlAttr(defaultTools)}\" :key=\"tool.action\">");
-            sb.Append("<button type=\"button\"");
-            sb.Append(" :disabled=\"tool.requireSelection && !hasSelection\"");
-            sb.Append($" @click=\"handleToolAction(tool.action, tool.onClick, '{formId}')\"");
-            sb.Append(" :class=\"{'opacity-40 cursor-not-allowed': tool.requireSelection && !hasSelection}\"");
-            sb.Append(" class=\"inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-400 transition-colors shadow-sm\">");
-            sb.Append("<span x-text=\"tool.label\"></span>");
-            sb.Append("</button>");
-            sb.Append("</template>");
+            sb.Append("<div class=\"flex items-center gap-2 flex-wrap\">");
+            AppendToolbarCommands(sb, formId);
             sb.Append("</div>");
             sb.Append("</div>");
 
             return sb.ToString();
+        }
+
+        private void AppendToolbarCommands(StringBuilder sb, string formId)
+        {
+            var hasAnyButton = false;
+
+            string BuildButton(string title, string click, string disabledExpr, string activeClass, string iconSvg, string text)
+            {
+                if (ToolbarCompact)
+                {
+                    return $@"<button type=""button"" @click=""{click}"" title=""{title}"" :disabled=""{disabledExpr}""
+                          :class=""{disabledExpr} ? 'opacity-40 cursor-not-allowed' : '{activeClass}'""
+                          class=""inline-flex items-center justify-center w-8 h-8 text-slate-600 bg-white border border-slate-300 rounded-md transition-colors"">
+                        {iconSvg}
+                    </button>";
+                }
+
+                return $@"<button type=""button"" @click=""{click}"" title=""{title}"" :disabled=""{disabledExpr}""
+                          :class=""{disabledExpr} ? 'opacity-40 cursor-not-allowed' : '{activeClass}'""
+                          class=""inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg transition-colors"">
+                        {iconSvg}
+                        {text}
+                    </button>";
+            }
+
+            void AppendSeparator()
+            {
+                if (!hasAnyButton) return;
+                sb.Append(@"<span class=""mx-1 h-6 w-px bg-slate-200""></span>");
+            }
+
+            if (ToolbarNavCommandVisible)
+            {
+                sb.Append(BuildButton("首筆", "selectFirstRecord()", "!canSelectFirst", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M11 19l-7-7 7-7m9 14l-7-7 7-7""/></svg>", "首筆"));
+                sb.Append(BuildButton("上筆", "selectPrevRecord()", "!canSelectPrev", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M15 19l-7-7 7-7""/></svg>", "上筆"));
+                sb.Append(BuildButton("下筆", "selectNextRecord()", "!canSelectNext", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M9 5l7 7-7 7""/></svg>", "下筆"));
+                sb.Append(BuildButton("末筆", "selectLastRecord()", "!canSelectLast", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M13 5l7 7-7 7M4 5l7 7-7 7""/></svg>", "末筆"));
+                hasAnyButton = true;
+            }
+
+            AppendSeparator();
+            sb.Append(BuildButton("新增", $"handleToolAction('add', null, '{formId}')", "false", "hover:bg-slate-50",
+                @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M12 4v16m8-8H4""/></svg>", "新增"));
+            hasAnyButton = true;
+
+            if (ToolbarEditCommandVisible)
+            {
+                sb.Append(BuildButton("編輯", $"handleToolAction('edit', null, '{formId}')", "!hasSelection", "hover:bg-slate-50",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z""/></svg>", "編輯"));
+                hasAnyButton = true;
+            }
+
+            if (ToolbarDeleteCommandVisible)
+            {
+                sb.Append(BuildButton("刪除", $"handleToolAction('delete', null, '{formId}')", "!hasSelection", "hover:bg-rose-50 hover:text-rose-600",
+                    @"<svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16""/></svg>", "刪除"));
+                hasAnyButton = true;
+            }
+
+            AppendSeparator();
+            sb.Append(BuildButton("重整", "refreshData()", "false", "hover:bg-slate-50",
+                @"<svg class=""w-4 h-4"" :class=""loading ? 'animate-spin' : ''"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15""/></svg>", "重整"));
         }
 
         private string BuildViewGrid(List<FormColumn> columns, int gridCols)
@@ -604,13 +669,13 @@ namespace Web_EIP_Restruct.Views.Components
                        + $"formatDisplay:{(string.IsNullOrWhiteSpace(fmt) ? "null" : $"function(d){{return {BuildLovDisplayExpression(fmt, "d")};}}")}"
                        + $",onConfirm:{cb}}})";
 
-            return "<div class=\"flex items-center\">"
+            return "<div class=\"flex items-center w-full\">"
                  + $"<input type=\"hidden\" id=\"{inputId}_hidden\" x-model=\"formData['{f}']\"{validateAttrs}/>"
                  + $"<input type=\"text\" id=\"{inputId}\" x-model=\"formData['{displayF}']\" readonly"
                  + $" placeholder=\"{HtmlEnc(col.Placeholder.Coalesce("請選擇資料"))}\""
-                 + " class=\"block min-w-0 flex-1 px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm text-slate-700 bg-white placeholder:text-slate-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors\"/>"
+                 + " class=\"block min-w-0 w-full flex-1 h-[42px] px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm text-slate-700 bg-white placeholder:text-slate-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors\"/>"
                  + $"<button type=\"button\" onclick=\"{HtmlAttr(openJs)}\""
-                 + " class=\"shrink-0 inline-flex items-center justify-center px-3 border border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors\">"
+                 + " class=\"shrink-0 inline-flex items-center justify-center h-[42px] min-w-[42px] px-3 border border-l-0 border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors\">"
                  + "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\"/></svg>"
                  + "</button>"
                  + "</div>";

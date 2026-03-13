@@ -1966,14 +1966,14 @@ function gDataGrid_{cfg.CompId}() {{
                     </select>",
 
                 "gcombogrid" or "lovinput" or "gcombogrid" =>
-                    $@"<div class=""flex items-center"">
+                    $@"<div class=""flex items-center w-full"">
                         <input type=""text"" id=""{field}_query_input""
                                x-model=""queryDisplayValues['{field}']""
                                @input=""queryValues['{field}'] = queryDisplayValues['{field}']""
-                               class=""block min-w-0 flex-1 px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm text-slate-700 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors""
+                               class=""block min-w-0 w-full flex-1 h-[42px] px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm text-slate-700 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors""
                                @keydown.enter.prevent=""onQueryInputEnter('{field}', '{field}_query_input', queryDisplayValues['{field}'])"">
                         <button type=""button"" @click=""invokeQueryDefaultMethod('{field}', '{field}_query_input', queryDisplayValues['{field}'])""
-                                class=""shrink-0 inline-flex items-center justify-center px-3 border border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors"" title=""選取"">
+                                class=""shrink-0 inline-flex items-center justify-center h-[42px] min-w-[42px] px-3 border border-l-0 border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors"" title=""選取"">
                             <svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24"">
                                 <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z""/>
                             </svg>
@@ -2107,14 +2107,14 @@ function gDataGrid_{cfg.CompId}() {{
                     break;
 
                 case FormColumnType.Lov:
-                    sb.Append($@"<div class=""flex items-center"">
+                    sb.Append($@"<div class=""flex items-center w-full"">
                         <input type=""hidden"" x-model=""formRecord['{f}']"">
                         <input type=""text"" x-model=""formRecord['{f}__DISPLAY']"" :readonly=""true""
-                               {roClass} class=""block min-w-0 flex-1 px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors""{placeholder}{maxLength}>
+                               {roClass} class=""block min-w-0 w-full flex-1 h-[42px] px-3 py-2.5 border border-slate-300 rounded-l-xl border-r-0 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors""{placeholder}{maxLength}>
                         <button type=""button""
                                 x-show=""!({roExpr})""
                                 @click=""openFormLov('{f}')"" 
-                                class=""shrink-0 inline-flex items-center justify-center px-3 border border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors"" title=""選取"">
+                                class=""shrink-0 inline-flex items-center justify-center h-[42px] min-w-[42px] px-3 border border-l-0 border-slate-300 rounded-r-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors"" title=""選取"">
                             <svg class=""w-4 h-4"" fill=""none"" stroke=""currentColor"" viewBox=""0 0 24 24"">
                                 <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2""
                                       d=""M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z""/>

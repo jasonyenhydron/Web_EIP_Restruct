@@ -9,9 +9,16 @@ window.gDataForm = function (formId, initialFields, initialQueryValues) {
     queryValues: { ...(initialQueryValues || {}) },
     queryPanelOpen: true,
     originalData: {},
+    queryRows: [],
+    currentRowIndex: -1,
     errors: {},
     selectOptions: {},
     hasSelection: false,
+    hasRows: false,
+    canSelectFirst: false,
+    canSelectPrev: false,
+    canSelectNext: false,
+    canSelectLast: false,
     loading: false,
     alwaysReadOnly: false,
 
@@ -19,6 +26,7 @@ window.gDataForm = function (formId, initialFields, initialQueryValues) {
       const el = document.getElementById(this.formId);
       if (!el) return;
       this.alwaysReadOnly = el.dataset.alwaysReadonly === '1';
+      this._syncNavigationState();
 
       const parentId = el.dataset.parentId;
       if (parentId) {
@@ -49,6 +57,16 @@ window.gDataForm = function (formId, initialFields, initialQueryValues) {
       this.queryValues = { ...this.queryDefaults };
     },
 
+    refreshData() {
+      const el = document.getElementById(this.formId);
+      if (!el) return;
+      if (Object.keys(this._buildQueryParams(el)).length > 0 || el.dataset.queryApi) {
+        this.executeQuery();
+        return;
+      }
+      this._loadData(el);
+    },
+
     handleToolAction(action, customFn, formIdValue) {
       if (action === 'custom' && customFn && typeof window[customFn] === 'function') {
         window[customFn](this.formData);
@@ -69,6 +87,9 @@ window.gDataForm = function (formId, initialFields, initialQueryValues) {
       this.errors = {};
       const defaults = this._getDefaults(el);
       this.formData = { ...defaults };
+      this.hasSelection = false;
+      this.currentRowIndex = -1;
+      this._syncNavigationState();
       this._applyRelationDefaults(el);
       this._openFlowbiteModal(`${formIdValue}_modal`);
     },
@@ -109,6 +130,7 @@ window.gDataForm = function (formId, initialFields, initialQueryValues) {
           gDataFormToast.success('刪除成功');
           this.formData = this._getDefaults(el);
           this.hasSelection = false;
+          this._removeCurrentRecord();
           this.closeModal(modalId);
           this._triggerCallback(el, 'onApplied', null);
           this._notifyChain(el);
@@ -196,10 +218,14 @@ window.gDataForm = function (formId, initialFields, initialQueryValues) {
           if (continueAdd && isAdd) {
             this.formData = this._getDefaults(el);
             this.errors = {};
+            this.hasSelection = false;
+            this.currentRowIndex = -1;
+            this._syncNavigationState();
             } else {
               this.closeModal(modalId);
               if (json.data) this.formData = { ...this.formData, ...json.data };
               this.hasSelection = !!this._getPrimaryKeyValue(el);
+              this._upsertCurrentRecord(json.data || payload, el);
               this.mode = 'view';
             }
 
@@ -257,6 +283,7 @@ window.gDataForm = function (formId, initialFields, initialQueryValues) {
         if (res.ok && json.data) {
           this.formData = { ...this.formData, ...json.data };
           this.hasSelection = !!this._getPrimaryKeyValue(el);
+          this._syncCurrentRowIndex(el);
           this._triggerCallback(el, 'onLoadSuccess', this.formData);
         }
       } catch (_) {
@@ -280,18 +307,25 @@ window.gDataForm = function (formId, initialFields, initialQueryValues) {
         }
 
         const payload = json.data;
-        const row = Array.isArray(payload) ? (payload[0] || null) : payload;
+        const rows = Array.isArray(payload) ? payload : (payload ? [payload] : []);
+        const row = rows[0] || null;
         if (!row) {
           gDataFormToast.warn('查無資料');
+          this.queryRows = [];
           this.hasSelection = false;
+          this.currentRowIndex = -1;
+          this._syncNavigationState();
           this._triggerCallback(el, 'onQueryLoaded', null);
           return;
         }
 
+        this.queryRows = rows;
         this.formData = { ...this.formData, ...row };
         this.hasSelection = !!this._getPrimaryKeyValue(el);
+        this.currentRowIndex = 0;
+        this._syncNavigationState();
         this.mode = 'view';
-        this._triggerCallback(el, 'onQueryLoaded', { row, rows: Array.isArray(payload) ? payload : [payload], raw: json });
+        this._triggerCallback(el, 'onQueryLoaded', { row, rows, raw: json });
         this._triggerCallback(el, 'onLoadSuccess', this.formData);
       } catch (err) {
         gDataFormToast.error(`查詢失敗：${err.message}`);
@@ -319,8 +353,29 @@ window.gDataForm = function (formId, initialFields, initialQueryValues) {
       this.hasSelection = true;
       this.mode = 'view';
       const el = document.getElementById(this.formId);
+      this._syncCurrentRowIndex(el, data);
       this._notifyChain(el);
       document.dispatchEvent(new CustomEvent(`gDataForm:selected:${this.formId}`, { detail: data }));
+    },
+
+    selectFirstRecord() {
+      if (!this.canSelectFirst) return;
+      this._selectRecordAt(0);
+    },
+
+    selectPrevRecord() {
+      if (!this.canSelectPrev) return;
+      this._selectRecordAt(this.currentRowIndex - 1);
+    },
+
+    selectNextRecord() {
+      if (!this.canSelectNext) return;
+      this._selectRecordAt(this.currentRowIndex + 1);
+    },
+
+    selectLastRecord() {
+      if (!this.canSelectLast) return;
+      this._selectRecordAt(this.queryRows.length - 1);
     },
 
     async loadSelectOptions(apiUrl, fieldName) {
@@ -474,6 +529,108 @@ window.gDataForm = function (formId, initialFields, initialQueryValues) {
       const keys = Object.keys(this.formData);
       const idField = keys.find((k) => k.toLowerCase().endsWith('_id') || k.toLowerCase() === 'id');
       return idField ? this.formData[idField] : null;
+    },
+
+    _getPrimaryKeyFieldName(el) {
+      const pkField = el?.querySelector?.('[data-is-pk="1"]');
+      if (pkField?.dataset?.fieldName) return pkField.dataset.fieldName;
+      const keys = Object.keys(this.formData || {});
+      return keys.find((k) => k.toLowerCase().endsWith('_id') || k.toLowerCase() === 'id') || '';
+    },
+
+    _selectRecordAt(index) {
+      if (!Array.isArray(this.queryRows) || index < 0 || index >= this.queryRows.length) return;
+      const row = this.queryRows[index];
+      this.formData = { ...row };
+      this.hasSelection = true;
+      this.mode = 'view';
+      this.currentRowIndex = index;
+      this._syncNavigationState();
+      const el = document.getElementById(this.formId);
+      this._notifyChain(el);
+      document.dispatchEvent(new CustomEvent(`gDataForm:selected:${this.formId}`, { detail: row }));
+    },
+
+    _syncCurrentRowIndex(el, data) {
+      const source = data || this.formData;
+      if (!Array.isArray(this.queryRows) || this.queryRows.length === 0) {
+        this.currentRowIndex = -1;
+        this._syncNavigationState();
+        return;
+      }
+
+      const pkName = this._getPrimaryKeyFieldName(el);
+      if (pkName) {
+        const pkValue = source?.[pkName];
+        const idx = this.queryRows.findIndex((row) => row?.[pkName] === pkValue);
+        this.currentRowIndex = idx;
+      } else {
+        this.currentRowIndex = this.queryRows.findIndex((row) => row === source);
+      }
+
+      this._syncNavigationState();
+    },
+
+    _syncNavigationState() {
+      const total = Array.isArray(this.queryRows) ? this.queryRows.length : 0;
+      this.hasRows = total > 0;
+      this.canSelectFirst = total > 0 && this.currentRowIndex !== 0;
+      this.canSelectPrev = total > 0 && this.currentRowIndex > 0;
+      this.canSelectNext = total > 0 && this.currentRowIndex >= 0 && this.currentRowIndex < total - 1;
+      this.canSelectLast = total > 0 && this.currentRowIndex !== total - 1;
+    },
+
+    _upsertCurrentRecord(record, el) {
+      if (!record) {
+        this._syncCurrentRowIndex(el);
+        return;
+      }
+
+      const pkName = this._getPrimaryKeyFieldName(el);
+      if (!Array.isArray(this.queryRows)) this.queryRows = [];
+
+      if (!pkName) {
+        if (this.currentRowIndex >= 0 && this.currentRowIndex < this.queryRows.length) {
+          this.queryRows[this.currentRowIndex] = { ...this.queryRows[this.currentRowIndex], ...record };
+        } else {
+          this.queryRows.push({ ...record });
+          this.currentRowIndex = this.queryRows.length - 1;
+        }
+        this._syncNavigationState();
+        return;
+      }
+
+      const pkValue = record?.[pkName] ?? this.formData?.[pkName];
+      const idx = this.queryRows.findIndex((row) => row?.[pkName] === pkValue);
+      if (idx >= 0) {
+        this.queryRows[idx] = { ...this.queryRows[idx], ...record };
+        this.currentRowIndex = idx;
+      } else {
+        this.queryRows.push({ ...record });
+        this.currentRowIndex = this.queryRows.length - 1;
+      }
+      this._syncNavigationState();
+    },
+
+    _removeCurrentRecord() {
+      if (!Array.isArray(this.queryRows) || this.currentRowIndex < 0 || this.currentRowIndex >= this.queryRows.length) {
+        this.currentRowIndex = -1;
+        this._syncNavigationState();
+        return;
+      }
+
+      this.queryRows.splice(this.currentRowIndex, 1);
+      if (this.queryRows.length === 0) {
+        this.currentRowIndex = -1;
+      } else if (this.currentRowIndex >= this.queryRows.length) {
+        this.currentRowIndex = this.queryRows.length - 1;
+        this.formData = { ...this.queryRows[this.currentRowIndex] };
+        this.hasSelection = true;
+      } else {
+        this.formData = { ...this.queryRows[this.currentRowIndex] };
+        this.hasSelection = true;
+      }
+      this._syncNavigationState();
     },
 
     _notifyChain(el) {
