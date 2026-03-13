@@ -35,7 +35,7 @@ stack:
 - **Dapper**：主要資料存取工具（micro-ORM / object mapper，非全功能 ORM）
 - **互動模式**：Datagrid + DataForm + LOV 為核心
 
-> ⚠️ 本專案**不是純 SPA**，也**不是完全前後端分離架構**。
+> ⚠️ 本專案**純 SPA**，也**使用技術由taghelper渲染前端**。
 > 正確描述為：**Hybrid MVC + HTMX ERP Framework**
 > 若需前端重互動，優先以 HTMX + Partial View + Alpine.js 實現，
 > 不引入大型前端框架。
@@ -66,9 +66,10 @@ stack:
 
 ### Rule 1：UI 元件優先級
 
-1. 優先使用既有 TagHelpers
+1. 優先使用既有 TagHelpers，例如 `<g-data-grid>`、`<g-data-form>`、`<g-lov-input>`，含有標準事件與屬性
 2. 無法實現時，擴充共用 TagHelper
 3. 最後才允許頁面專屬 HTML / JS
+4. CRUD 行為優先導向 Form 元件，不直接寫在 Grid 頁面 ，避免重複造輪80％工作由tagHelper 處理 CRUD
 
 **禁止：**
 - 在頁面中重複貼相同 Grid / Form / LOV 行為邏輯
@@ -104,8 +105,8 @@ stack:
 ### Rule 4：Dapper 使用規範
 
 1. Dapper 僅負責 data access，不承擔 domain tracking / change detection
-2. CRUD 請明確區分 **Query Service** 與 **Command Service**
-3. 多步驟異動必須使用**交易控制**
+2. CRUD 請明確區分 **Query Service** 與 **Command Service**  insert/update/delete 分開，避免混淆
+3. 多步驟異動必須使用**交易控制** transaction scope，確保資料一致性
 4. 跨 repository / 多 SQL 異動需透過 transaction scope abstraction
 5. 不要把所有查詢做成 generic repository；複雜查詢請明確撰寫 SQL
 
@@ -122,24 +123,29 @@ GDataGrid 是清單頁的主元件，負責：
 
 **標準事件（必須全部綁定）：**
 
+toolbar event 觸發 CRUD 行為，統一導向 Form 元件，避免在 Grid 頁面直接寫 CRUD 邏輯
 | 事件 | 說明 |
 |------|------|
+| `@first` | 最前筆 |
+| `@prev` | 前一筆 |
+| `@next` | 下一筆 |
+| `@last` | 最後筆 |
 | `@add` | 新增 |
 | `@view` | 檢視 |
 | `@edit` | 編輯 |
 | `@delete` | 刪除 |
 | `@query` | 查詢 |
-| `@first` | 最前筆 |
-| `@prev` | 前一筆 |
-| `@next` | 下一筆 |
-| `@last` | 最後筆 |
+| `@print` | 列印（pdf, xlsx, csv） |
 
 **規則：**
 1. Grid **不直接承載商業邏輯**
 2. Grid 的 edit / insert / view 一律導向 `GDataForm`
 3. 共用行為優先擴充 `GDataGridTagHelper`
 4. 避免各頁面重複實作相同 grid 行為
-
+5. toolbar 在grid上方，可設定各別button visable
+6. querypanel在grid上方，可設定visable，，可展開收合，按query按鈕觸發 `@query` 事件將資料顯示在grid上
+7. 可設定querycolumns，指定哪些欄位參與查詢條件，並自動生成查詢語法傳至api
+8. querycolumns的type可設定lovinput,textinput,textarea,dropdownlist,checkboxlist,radiobuttonlist,datepicker,timepicker,datetimepicker,numberinput等，lovinput可指定lovcode，其他type可指定dataformat（例如日期的yyyy/MM/dd），優先使用內建的元件類型，特殊需求再擴充 TagHelper
 ---
 
 ### Rule 6：GDataForm 規範
@@ -155,21 +161,25 @@ GDataForm 是單筆資料維護主元件，負責：
 
 | 事件 | 說明 |
 |------|------|
+| `@first` | 最前筆 |
+| `@prev` | 前一筆 |
+| `@next` | 下一筆 |
+| `@last` | 最後筆 |
 | `@add` | 新增 |
 | `@view` | 檢視 |
 | `@edit` | 編輯 |
 | `@delete` | 刪除 |
 | `@query` | 查詢 |
-| `@first` | 最前筆 |
-| `@prev` | 前一筆 |
-| `@next` | 下一筆 |
-| `@last` | 最後筆 |
+| `@print` | 列印（pdf, xlsx, csv） |
 
 **規則：**
 1. 單筆表單互動邏輯集中在 `GDataFormTagHelper`
 2. 頁面只調整屬性參數與欄位配置
 3. 不在 Grid 頁面內直接寫 Form CRUD 邏輯
-
+5. toolbar 在dataform上方，可設定各別button visable
+6. querypanel在dataform上方，可設定visable，可展開收合，按query按鈕觸發 `@query` 事件將資料顯示在form上
+7. 可設定querycolumns，指定哪些欄位參與查詢條件，並自動生成查詢語法傳至api
+8. querycolumns的type可設定lovinput,textinput,textarea,dropdownlist,checkboxlist,radiobuttonlist,datepicker,timepicker,datetimepicker,numberinput等，lovinput可指定lovcode，其他type可指定dataformat（例如日期的yyyy/MM/dd），優先使用內建的元件類型，特殊需求再擴充 TagHelper
 ---
 
 ### Rule 7：LOV 規範
@@ -261,7 +271,7 @@ GDataForm 是單筆資料維護主元件，負責：
 | 程式進入點 | `Program.cs` |
 | 主 Layout | `Views/Shared/_Layout.cshtml` |
 | LOV Modal | `Views/Shared/_LovModal.cshtml` |
-
+| 程式視窗 Layout | `Views/Shared/_popupLayout.cshtml` |
 ### DB Helpers
 | DB | 路徑 |
 |----|------|
